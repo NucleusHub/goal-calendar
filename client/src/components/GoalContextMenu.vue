@@ -23,7 +23,7 @@ onUnmounted(() => {
 <template>
   <Teleport to="body">
     <div
-      class="fixed z-[60] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1 min-w-36"
+      class="fixed z-[60] bg-white/25 dark:bg-white/8 rounded-xl shadow-2xl border border-white/60 dark:border-white/10 py-1 min-w-36"
       :style="{ top: `${y}px`, left: `${x}px` }"
       @click.stop
     >

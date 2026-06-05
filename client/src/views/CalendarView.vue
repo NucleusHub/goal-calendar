@@ -135,9 +135,14 @@ function appearsOnDay(goal, date) {
   return false
 }
 
-function goalsForDay(date) {
-  return goals.value.filter(g => appearsOnDay(g, date))
-}
+const goalsPerDay = computed(() => {
+  const map = new Map()
+  for (const day of calendarDays.value) {
+    const key = dateKey(day.date)
+    map.set(key, goals.value.filter(g => appearsOnDay(g, day.date)))
+  }
+  return map
+})
 
 function dateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -322,52 +327,62 @@ function openModal(day) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col">
+  <div class="relative min-h-screen bg-slate-100 dark:bg-[#0d0d1a] text-slate-900 dark:text-white flex flex-col overflow-x-hidden">
+    <!-- Background blobs -->
+    <div class="pointer-events-none fixed inset-0 overflow-hidden z-0">
+      <div class="absolute -top-32 -left-32 w-[450px] h-[450px] rounded-full bg-violet-400/30 dark:bg-violet-700/45 blur-[100px]" />
+      <div class="absolute -bottom-32 -right-32 w-[450px] h-[450px] rounded-full bg-indigo-400/30 dark:bg-indigo-700/45 blur-[100px]" />
+      <div class="absolute top-1/3 right-1/4 w-64 h-64 rounded-full bg-blue-400/20 dark:bg-blue-600/30 blur-[80px]" />
+    </div>
+
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
 
-    <!-- Header -->
-    <header class="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 px-4 py-3">
+    <!-- Header: hamburger pinned left, nav controls centered -->
+    <header class="relative sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-[#0d0d1a]/80 border-b border-white/50 dark:border-white/8 flex items-center px-4 py-3 shadow-sm shadow-indigo-500/5">
       <button
         @click="sidebarOpen = true"
-        class="cursor-pointer p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        class="cursor-pointer shrink-0 p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
         </svg>
       </button>
 
-      <div class="flex items-center gap-2 flex-1">
-        <button
-          @click="prevMonth"
-          class="cursor-pointer p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-        </button>
+      <!-- Centered nav controls -->
+      <div class="absolute left-0 right-0 flex items-center justify-center gap-2 pointer-events-none">
+        <div class="flex items-center gap-2 pointer-events-auto">
+          <button
+            @click="prevMonth"
+            class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
 
-        <h1 class="text-base font-semibold min-w-40 text-center">{{ monthLabel }}</h1>
+          <h1 class="text-base font-semibold min-w-40 text-center">{{ monthLabel }}</h1>
 
-        <button
-          @click="nextMonth"
-          class="cursor-pointer p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
-        </button>
+          <button
+            @click="nextMonth"
+            class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
 
-        <button
-          @click="goToday"
-          class="cursor-pointer ml-1 px-3 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-        >
-          Today
-        </button>
+          <button
+            @click="goToday"
+            class="cursor-pointer ml-1 px-3 py-1 text-xs font-medium rounded-lg bg-black/8 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-black/12 dark:hover:bg-white/15 backdrop-blur-sm transition-colors"
+          >
+            Today
+          </button>
+        </div>
       </div>
     </header>
 
     <!-- Calendar -->
-    <main class="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
+    <main class="relative z-10 flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
       <div class="flex gap-4 items-start">
       <div class="flex-1 min-w-0">
       <!-- Day labels -->
@@ -386,12 +401,12 @@ function openModal(day) {
         <Transition :name="direction === 'next' ? 'slide-left' : 'slide-right'">
           <div
             :key="calendarKey"
-            class="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800"
+            class="grid grid-cols-7 gap-px bg-slate-200/60 dark:bg-slate-800/60 border border-white/40 dark:border-white/8"
           >
             <div
               v-for="(day, i) in calendarDays"
               :key="i"
-              class="group/day bg-white dark:bg-slate-900 min-h-24 p-2 flex flex-col gap-1 relative"
+              class="group/day bg-white/60 dark:bg-slate-900/60 min-h-24 p-2 flex flex-col gap-1 relative"
               :class="!day.inMonth ? 'opacity-40' : ''"
             >
               <div class="flex items-center justify-between">
@@ -418,7 +433,7 @@ function openModal(day) {
               <!-- Goal chips -->
               <div class="flex flex-wrap gap-1 mt-1">
                 <button
-                  v-for="goal in goalsForDay(day.date)"
+                  v-for="goal in goalsPerDay.get(dateKey(day.date)) ?? []"
                   :key="goal._id"
                   @click.stop="toggleCompletion(goal, day.date, $event)"
                   @contextmenu.stop="onChipRightClick($event, goal, day.date)"
@@ -466,7 +481,7 @@ function openModal(day) {
                   :filter="`url(#glow-${goal._id})`"
                 />
               </svg>
-              <div class="relative flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 rounded-[10px] shadow-sm">
+              <div class="relative flex items-center gap-2 px-3 py-2 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 rounded-[10px] shadow-sm border border-white/50 dark:border-white/8">
                 <div class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: goal.color }" />
                 <span class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ goal.name }}</span>
                 <span class="text-sm font-bold text-orange-500">{{ streak }}</span>
@@ -479,7 +494,7 @@ function openModal(day) {
       </div><!-- end calendar column -->
 
       <!-- Animation toggles panel -->
-      <div class="shrink-0 w-40 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 flex flex-col gap-3 mt-9">
+      <div class="shrink-0 w-40 backdrop-blur-xl bg-white/60 dark:bg-slate-900/60 rounded-xl border border-white/60 dark:border-white/10 p-3 flex flex-col gap-3 mt-9 shadow-lg shadow-indigo-500/10 dark:shadow-black/30">
         <p class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Animations</p>
         <div class="flex flex-col gap-2">
           <!-- All -->
@@ -490,7 +505,7 @@ function openModal(day) {
               <span :class="['absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform', animAll ? 'translate-x-4' : 'translate-x-0']" />
             </button>
           </div>
-          <div class="border-t border-slate-100 dark:border-slate-800" />
+          <div class="border-t border-black/8 dark:border-white/8" />
           <!-- Individual -->
           <div v-for="item in [
             { key: 'confetti', label: 'Confetti', emoji: '🎊' },

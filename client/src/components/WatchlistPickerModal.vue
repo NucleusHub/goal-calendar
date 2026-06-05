@@ -82,8 +82,8 @@ function formatRuntime(item) {
   <Teleport to="body">
     <Transition name="fade">
       <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="emit('close')" />
-        <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col" style="max-height: 80vh;">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="emit('close')" />
+        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col" style="max-height: 80vh;">
 
           <!-- Header -->
           <div class="flex items-center justify-between px-5 pt-5 pb-4 shrink-0">

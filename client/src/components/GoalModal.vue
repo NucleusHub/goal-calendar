@@ -97,10 +97,10 @@ function handleSubmit() {
   <Teleport to="body">
     <Transition name="fade">
       <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="emit('close')" />
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="emit('close')" />
         <!-- Floating left button panel -->
         <div class="relative flex items-start gap-3">
-          <div class="shrink-0 flex flex-col gap-2 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-2">
+          <div class="shrink-0 flex flex-col gap-2 bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl p-2">
             <button
               type="button"
               @click="showWatchlistPicker = true"
@@ -119,7 +119,7 @@ function handleSubmit() {
           </div>
 
         <!-- Modal panel -->
-        <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md">
           <div class="p-5 flex flex-col gap-5">
 
             <!-- Title bar -->

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
 import { APP_NAME, NAV_ITEMS } from '@/config.js'
+import logoUrl from '@/assets/nucleus-logo-transparent.png'
 
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['close'])
@@ -56,20 +57,16 @@ sysMq.addEventListener('change', () => { if (theme.value === 'system') applyThem
     >
       <!-- Sidebar panel -->
       <div
-        class="w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-2xl shrink-0 transition-transform duration-[220ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        class="w-60 backdrop-blur-xl bg-white/80 dark:bg-slate-900/85 border-r border-white/50 dark:border-white/10 flex flex-col shadow-2xl shadow-indigo-500/10 dark:shadow-black/40 shrink-0 transition-transform duration-[220ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         :class="open ? 'translate-x-0' : '-translate-x-full'"
       >
-        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-white/40 dark:border-white/8">
           <a
             href="/"
             @click="emit('close')"
             class="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
-            <div class="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center shrink-0">
-              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-              </svg>
-            </div>
+            <img :src="logoUrl" alt="" class="w-6 h-6 object-contain" />
             {{ APP_NAME }}
           </a>
           <button
@@ -88,12 +85,12 @@ sysMq.addEventListener('change', () => { if (theme.value === 'system') applyThem
             :key="item.to"
             :href="item.to"
             @click="emit('close')"
-            class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            :class="isActive(item.to) ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' : ''"
+            class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/8 transition-colors"
+            :class="isActive(item.to) ? 'bg-white/60 dark:bg-white/8 text-slate-900 dark:text-white' : ''"
           >
             <div
               class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors"
-              :class="isActive(item.to) ? 'bg-indigo-600' : 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'"
+              :class="isActive(item.to) ? 'bg-indigo-600' : 'bg-black/5 dark:bg-white/8 group-hover:bg-black/8 dark:group-hover:bg-white/15'"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
@@ -107,8 +104,8 @@ sysMq.addEventListener('change', () => { if (theme.value === 'system') applyThem
         </nav>
 
         <!-- Theme switcher -->
-        <div class="px-3 py-3 border-t border-slate-200 dark:border-slate-800">
-          <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 gap-0.5">
+        <div class="px-3 py-3 border-t border-white/40 dark:border-white/8">
+          <div class="flex bg-black/5 dark:bg-white/8 rounded-lg p-0.5 gap-0.5">
             <button
               v-for="t in THEMES"
               :key="t.key"
@@ -116,7 +113,7 @@ sysMq.addEventListener('change', () => { if (theme.value === 'system') applyThem
               :title="t.label"
               :class="['cursor-pointer flex-1 flex items-center justify-center py-1.5 rounded-md transition-colors',
                 theme === t.key
-                  ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm'
+                  ? 'bg-white/80 dark:bg-white/20 text-slate-900 dark:text-white shadow-sm'
                   : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-white']"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
