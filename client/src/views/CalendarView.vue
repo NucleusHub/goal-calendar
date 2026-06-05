@@ -382,9 +382,8 @@ function openModal(day) {
     </header>
 
     <!-- Calendar -->
-    <main class="relative z-10 flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">
-      <div class="flex gap-4 items-start">
-      <div class="flex-1 min-w-0">
+    <main class="relative z-10 flex-1 p-4 sm:p-6 w-full">
+      <div class="relative max-w-4xl mx-auto">
       <!-- Day labels -->
       <div class="grid grid-cols-7 mb-1">
         <div
@@ -491,10 +490,8 @@ function openModal(day) {
           </div>
         </div>
       </Transition>
-      </div><!-- end calendar column -->
-
-      <!-- Animation toggles panel -->
-      <div class="shrink-0 w-40 backdrop-blur-xl bg-white/60 dark:bg-slate-900/60 rounded-xl border border-white/60 dark:border-white/10 p-3 flex flex-col gap-3 mt-9 shadow-lg shadow-indigo-500/10 dark:shadow-black/30">
+      <!-- Animation toggles panel: floats to the right of the centered calendar -->
+      <div class="absolute top-[36px] left-full ml-4 w-40 backdrop-blur-xl bg-white/60 dark:bg-slate-900/60 rounded-xl border border-white/60 dark:border-white/10 p-3 flex flex-col gap-3 shadow-lg shadow-indigo-500/10 dark:shadow-black/30">
         <p class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Animations</p>
         <div class="flex flex-col gap-2">
           <!-- All -->
@@ -520,8 +517,7 @@ function openModal(day) {
           </div>
         </div>
       </div>
-
-      </div><!-- end flex row -->
+      </div><!-- end mx-auto wrapper -->
     </main>
 
     <!-- Fire particles -->
