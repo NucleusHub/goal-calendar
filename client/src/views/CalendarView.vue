@@ -2,7 +2,8 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { animate } from 'animejs'
 import confetti from 'canvas-confetti'
-import AppSidebar from '@/components/AppSidebar.vue'
+import AppSidebar from '@core/AppSidebar.vue'
+import BackgroundBlobs from '@core/BackgroundBlobs.vue'
 import GoalModal from '@/components/GoalModal.vue'
 import GoalContextMenu from '@/components/GoalContextMenu.vue'
 import EditGoalModal from '@/components/EditGoalModal.vue'
@@ -328,12 +329,7 @@ function openModal(day) {
 
 <template>
   <div class="relative min-h-screen bg-slate-100 dark:bg-[#0d0d1a] text-slate-900 dark:text-white flex flex-col overflow-x-hidden">
-    <!-- Background blobs -->
-    <div class="pointer-events-none fixed inset-0 overflow-hidden z-0">
-      <div class="absolute -top-32 -left-32 w-[450px] h-[450px] rounded-full bg-violet-400/30 dark:bg-violet-700/45 blur-[100px]" />
-      <div class="absolute -bottom-32 -right-32 w-[450px] h-[450px] rounded-full bg-indigo-400/30 dark:bg-indigo-700/45 blur-[100px]" />
-      <div class="absolute top-1/3 right-1/4 w-64 h-64 rounded-full bg-blue-400/20 dark:bg-blue-600/30 blur-[80px]" />
-    </div>
+    <BackgroundBlobs />
 
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
 
