@@ -1,0 +1,35 @@
+services:
+  goal-calendar-server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/nucleus
+      PORT: 3001
+    volumes:
+      - ./server:/app
+      - goal_calendar_server_modules:/app/node_modules
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/api/goals',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  goal-calendar:
+    build:
+      context: ./client
+    restart: unless-stopped
+    volumes:
+      - ./client/src:/app/src
+      - ./client/index.html:/app/index.html
+      - ./client/vite.config.js:/app/vite.config.js
+    depends_on:
+      goal-calendar-server:
+        condition: service_healthy
+
+volumes:
+  goal_calendar_server_modules:
