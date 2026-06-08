@@ -16,6 +16,6 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5175,
-    allowedHosts: true,
+    allowedHosts: ['nucleus.home', 'server.tail874dlf.ts.net'],
   },
 })
