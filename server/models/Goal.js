@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 
 const goalSchema = new mongoose.Schema(
   {
+    profileId:      { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', index: true },
     name:           { type: String, required: true, trim: true },
     description:    { type: String, default: '' },
     color:          { type: String, default: '#6366f1' },

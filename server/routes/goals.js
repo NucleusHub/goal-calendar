@@ -1,11 +1,13 @@
 import { Router } from 'express'
 import Goal from '../models/Goal.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = Router()
+router.use(requireAuth)
 
 router.get('/', async (req, res) => {
   try {
-    const goals = await Goal.find().sort({ createdAt: -1 })
+    const goals = await Goal.find({ profileId: req.profile.profileId }).sort({ createdAt: -1 })
     res.json(goals)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -14,7 +16,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const goal = await Goal.create(req.body)
+    const goal = await Goal.create({ ...req.body, profileId: req.profile.profileId })
     res.status(201).json(goal)
   } catch (err) {
     res.status(400).json({ error: err.message })
@@ -23,7 +25,11 @@ router.post('/', async (req, res) => {
 
 router.patch('/:id', async (req, res) => {
   try {
-    const goal = await Goal.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+    const goal = await Goal.findOneAndUpdate(
+      { _id: req.params.id, profileId: req.profile.profileId },
+      req.body,
+      { new: true, runValidators: true }
+    )
     if (!goal) return res.status(404).json({ error: 'Not found' })
     res.json(goal)
   } catch (err) {
@@ -34,7 +40,7 @@ router.patch('/:id', async (req, res) => {
 router.patch('/:id/toggle-date', async (req, res) => {
   try {
     const { date } = req.body
-    const goal = await Goal.findById(req.params.id)
+    const goal = await Goal.findOne({ _id: req.params.id, profileId: req.profile.profileId })
     if (!goal) return res.status(404).json({ error: 'Not found' })
     const idx = goal.completedDates.indexOf(date)
     if (idx === -1) goal.completedDates.push(date)
@@ -48,7 +54,7 @@ router.patch('/:id/toggle-date', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const goal = await Goal.findByIdAndDelete(req.params.id)
+    const goal = await Goal.findOneAndDelete({ _id: req.params.id, profileId: req.profile.profileId })
     if (!goal) return res.status(404).json({ error: 'Not found' })
     res.json({ message: 'Deleted' })
   } catch (err) {

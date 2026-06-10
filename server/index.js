@@ -1,14 +1,17 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import mongoose from 'mongoose'
 import goalsRoutes from './routes/goals.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
 
-app.use(cors())
+app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
+app.use(cookieParser())
+app.get('/api/goals/health', (_, res) => res.json({ ok: true }))
 app.use('/api/goals', goalsRoutes)
 
 mongoose
