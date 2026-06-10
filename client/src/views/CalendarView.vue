@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { animate } from 'animejs'
 import confetti from 'canvas-confetti'
 import AppSidebar from '@core/AppSidebar.vue'
+import AppHeader from '@core/AppHeader.vue'
 import BackgroundBlobs from '@core/BackgroundBlobs.vue'
 import GoalModal from '@/components/GoalModal.vue'
 import GoalContextMenu from '@/components/GoalContextMenu.vue'
@@ -334,48 +335,43 @@ function openModal(day) {
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
 
     <!-- Header: hamburger pinned left, nav controls centered -->
-    <header class="relative sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-[#0d0d1a]/80 border-b border-white/50 dark:border-white/8 flex items-center px-4 py-3 shadow-sm shadow-indigo-500/5">
+    <AppHeader>
+      <template #left>
+        <button
+          @click="sidebarOpen = true"
+          class="cursor-pointer p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </template>
+
+      <!-- Month navigation — centered via the grid's auto column -->
       <button
-        @click="sidebarOpen = true"
-        class="cursor-pointer shrink-0 p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
+        @click="prevMonth"
+        class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
       </button>
-
-      <!-- Centered nav controls -->
-      <div class="absolute left-0 right-0 flex items-center justify-center gap-2 pointer-events-none">
-        <div class="flex items-center gap-2 pointer-events-auto">
-          <button
-            @click="prevMonth"
-            class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </button>
-
-          <h1 class="text-base font-semibold min-w-40 text-center">{{ monthLabel }}</h1>
-
-          <button
-            @click="nextMonth"
-            class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-            </svg>
-          </button>
-
-          <button
-            @click="goToday"
-            class="cursor-pointer ml-1 px-3 py-1 text-xs font-medium rounded-lg bg-black/8 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-black/12 dark:hover:bg-white/15 backdrop-blur-sm transition-colors"
-          >
-            Today
-          </button>
-        </div>
-      </div>
-    </header>
+      <h1 class="text-base font-semibold min-w-40 text-center">{{ monthLabel }}</h1>
+      <button
+        @click="nextMonth"
+        class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+      <button
+        @click="goToday"
+        class="cursor-pointer px-3 py-1 text-xs font-medium rounded-lg bg-black/8 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-black/12 dark:hover:bg-white/15 transition-colors"
+      >
+        Today
+      </button>
+    </AppHeader>
 
     <!-- Calendar -->
     <main class="relative z-10 flex-1 p-4 sm:p-6 w-full">
