@@ -1,0 +1,26 @@
+{
+  "app": "goal-calendar",
+  "label": "Goals",
+  "version": "1.0.0",
+  "features": [
+    "task_sharing",
+    "goal_updates"
+  ],
+  "message_types": [
+    "goal.update"
+  ],
+  "composer_actions": [
+    {
+      "id": "share_goal",
+      "label": "Share goal",
+      "icon": "target"
+    }
+  ],
+  "context_actions": [
+    {
+      "id": "add_as_goal",
+      "label": "Add as goal",
+      "icon": "target"
+    }
+  ]
+}
