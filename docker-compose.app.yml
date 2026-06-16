@@ -3,6 +3,11 @@ services:
     build:
       context: ./server
     restart: unless-stopped
+    labels:
+      nucleus.managed: "true"
+      nucleus.stack: "nucleus"
+      nucleus.role: "app-server"
+      nucleus.app: "goal-calendar"
     environment:
       MONGODB_URI: mongodb://mongo:27017/nucleus
       PORT: 3001
@@ -23,6 +28,11 @@ services:
     build:
       context: ./client
     restart: unless-stopped
+    labels:
+      nucleus.managed: "true"
+      nucleus.stack: "nucleus"
+      nucleus.role: "app-client"
+      nucleus.app: "goal-calendar"
     volumes:
       - ./client/src:/app/src
       - ./client/index.html:/app/index.html
