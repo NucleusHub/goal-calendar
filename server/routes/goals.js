@@ -5,6 +5,22 @@ import { requireAuth } from '../middleware/auth.js'
 const router = Router()
 router.use(requireAuth)
 
+function requireAdmin(req, res, next) {
+  if (req.profile?.role !== 'admin') return res.status(403).json({ error: 'Admin required' })
+  next()
+}
+
+// Called by the admin panel when a user is deleted: drop all their goals.
+//   POST /api/goals/users/:userId/teardown
+router.post('/users/:userId/teardown', requireAdmin, async (req, res) => {
+  try {
+    const { deletedCount } = await Goal.deleteMany({ profileId: req.params.userId })
+    res.json({ ok: true, deleted: deletedCount })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 router.get('/', async (req, res) => {
   try {
     const goals = await Goal.find({ profileId: req.profile.profileId }).sort({ createdAt: -1 })
