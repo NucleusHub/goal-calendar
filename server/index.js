@@ -4,6 +4,7 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import mongoose from 'mongoose'
 import goalsRoutes from './routes/goals.js'
+import { requireAppEnabled } from './core/server/appAccess.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -12,6 +13,8 @@ app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 app.use(cookieParser())
 app.get('/api/goals/health', (_, res) => res.json({ ok: true }))
+// Refuse all Goals API access for users who have Goals disabled (admin override).
+app.use('/api/goals', requireAppEnabled('goal-calendar'))
 app.use('/api/goals', goalsRoutes)
 
 mongoose

@@ -1,43 +1,11 @@
-const BASE = '/api/goals'
+import { createApiClient } from '@core/createApiClient.js'
 
-export async function getGoals() {
-  const res = await fetch(BASE)
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
+// Endpoint map over the shared @core REST helper (credentials, JSON, error
+// shaping, 403 APP_DISABLED handling all live there).
+const api = createApiClient('/api/goals')
 
-export async function createGoal(data) {
-  const res = await fetch(BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
-
-export async function updateGoal(id, data) {
-  const res = await fetch(`${BASE}/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
-
-export async function toggleGoalDate(id, date) {
-  const res = await fetch(`${BASE}/${id}/toggle-date`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ date }),
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
-
-export async function deleteGoal(id) {
-  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
+export const getGoals = () => api.get('')
+export const createGoal = (data) => api.post('', data)
+export const updateGoal = (id, data) => api.patch(`/${id}`, data)
+export const toggleGoalDate = (id, date) => api.patch(`/${id}/toggle-date`, { date })
+export const deleteGoal = (id) => api.del(`/${id}`)

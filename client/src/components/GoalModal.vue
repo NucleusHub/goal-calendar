@@ -1,6 +1,11 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 import WatchlistPickerModal from './WatchlistPickerModal.vue'
+import { useRegistry } from '@core/useRegistry.js'
+
+// "Import from Watchlist" only makes sense when the Watchlist app is present.
+const { hasApp } = useRegistry()
+const watchlistInstalled = computed(() => hasApp('watchlist'))
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -100,7 +105,7 @@ function handleSubmit() {
         <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="emit('close')" />
         <!-- Floating left button panel -->
         <div class="relative flex items-start gap-3">
-          <div class="shrink-0 flex flex-col gap-2 bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl p-2">
+          <div v-if="watchlistInstalled" class="shrink-0 flex flex-col gap-2 bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl p-2">
             <button
               type="button"
               @click="showWatchlistPicker = true"

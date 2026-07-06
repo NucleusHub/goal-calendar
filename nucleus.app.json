@@ -2,7 +2,7 @@
   "id": "goal-calendar",
   "name": "Goals",
   "description": "Calendar & tracking",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "manifestVersion": 1,
   "compatibility": {
     "nucleus": ">=0.1.0 <1.0.0"
@@ -36,6 +36,9 @@
     },
     "depends": [
       "mongo"
+    ],
+    "bindMounts": [
+      "../core:/app/core:ro"
     ],
     "healthEndpoint": "/api/goals/health"
   }
