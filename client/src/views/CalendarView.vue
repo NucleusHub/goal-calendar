@@ -23,6 +23,14 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const monthLabel = computed(() =>
   new Date(currentYear.value, currentMonth.value).toLocaleString('default', { month: 'long', year: 'numeric' })
 )
+// Compact label for the phone header, where "September 2025" is too wide.
+const monthLabelShort = computed(() =>
+  new Date(currentYear.value, currentMonth.value).toLocaleString('default', { month: 'short', year: 'numeric' })
+)
+
+// Animations controls live in a header popover so they work at every width
+// (the old floating panel sat off-screen on phones and most laptops).
+const animPanelOpen = ref(false)
 
 function prevMonth() {
   direction.value = 'prev'
@@ -295,6 +303,32 @@ function onChipRightClick(e, goal, date) {
   ctxMenu.value = { visible: true, x: e.clientX, y: e.clientY, goal, date }
 }
 
+// Touch has no right-click, so a long-press opens the same edit/delete menu.
+let pressTimer = null
+let longPressed = false
+
+function onChipTouchStart(e, goal, date) {
+  longPressed = false
+  const t = e.touches?.[0]
+  if (!t) return
+  const x = t.clientX, y = t.clientY
+  pressTimer = setTimeout(() => {
+    longPressed = true
+    try { navigator.vibrate?.(15) } catch { /* not supported */ }
+    ctxMenu.value = { visible: true, x, y, goal, date }
+  }, 420)
+}
+
+function cancelPress() {
+  clearTimeout(pressTimer)
+}
+
+// A completed long-press must not also toggle completion on finger-lift.
+function onChipClick(goal, date, e) {
+  if (longPressed) { longPressed = false; return }
+  toggleCompletion(goal, date, e)
+}
+
 // ── Edit ───────────────────────────────────────────────────────────────────
 const editModal = ref({ visible: false, goal: null })
 
@@ -356,7 +390,10 @@ function openModal(day) {
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
       </button>
-      <h1 class="text-base font-semibold min-w-40 text-center">{{ monthLabel }}</h1>
+      <h1 class="text-sm sm:text-base font-semibold min-w-0 sm:min-w-40 text-center whitespace-nowrap px-1">
+        <span class="sm:hidden">{{ monthLabelShort }}</span>
+        <span class="hidden sm:inline">{{ monthLabel }}</span>
+      </h1>
       <button
         @click="nextMonth"
         class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
@@ -367,10 +404,61 @@ function openModal(day) {
       </button>
       <button
         @click="goToday"
-        class="cursor-pointer px-3 py-1 text-xs font-medium rounded-lg bg-black/8 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-black/12 dark:hover:bg-white/15 transition-colors"
+        class="cursor-pointer px-2.5 sm:px-3 py-1 text-xs font-medium rounded-lg bg-black/8 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-black/12 dark:hover:bg-white/15 transition-colors"
       >
         Today
       </button>
+
+      <template #right>
+        <!-- Animations popover — reachable at any width -->
+        <div class="relative">
+          <button
+            @click="animPanelOpen = !animPanelOpen"
+            title="Animations"
+            :class="[
+              'cursor-pointer p-2 rounded-lg transition-colors',
+              animPanelOpen
+                ? 'text-indigo-600 dark:text-indigo-400 bg-black/8 dark:bg-white/10'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10'
+            ]"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+            </svg>
+          </button>
+
+          <div v-if="animPanelOpen" class="fixed inset-0 z-40" @click="animPanelOpen = false" />
+          <div
+            v-if="animPanelOpen"
+            class="absolute right-0 top-full mt-2 w-48 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 rounded-xl border border-white/60 dark:border-white/10 p-3 flex flex-col gap-3 shadow-lg shadow-indigo-500/10 dark:shadow-black/30"
+          >
+            <p class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Animations</p>
+            <div class="flex flex-col gap-2">
+              <!-- All -->
+              <div class="flex items-center gap-2">
+                <span class="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-200">✨ All</span>
+                <button type="button" @click="toggleAll"
+                  :class="['relative w-8 h-4 rounded-full transition-colors shrink-0 cursor-pointer', animAll ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700']">
+                  <span :class="['absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform', animAll ? 'translate-x-4' : 'translate-x-0']" />
+                </button>
+              </div>
+              <div class="border-t border-black/8 dark:border-white/8" />
+              <!-- Individual -->
+              <div v-for="item in [
+                { key: 'confetti', label: 'Confetti', emoji: '🎊' },
+                { key: 'flames',   label: 'Flames',   emoji: '🔥' },
+                { key: 'ring',     label: 'Ring',     emoji: '💫' },
+              ]" :key="item.key" class="flex items-center gap-2">
+                <span class="flex-1 text-xs text-slate-500 dark:text-slate-400">{{ item.emoji }} {{ item.label }}</span>
+                <button type="button" @click="anim[item.key] = !anim[item.key]"
+                  :class="['relative w-8 h-4 rounded-full transition-colors shrink-0 cursor-pointer', anim[item.key] ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700']">
+                  <span :class="['absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform', anim[item.key] ? 'translate-x-4' : 'translate-x-0']" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
     </AppHeader>
 
     <!-- Calendar -->
@@ -383,7 +471,8 @@ function openModal(day) {
           :key="day"
           class="text-center text-xs font-medium text-slate-400 dark:text-slate-500 py-2"
         >
-          {{ day }}
+          <span class="sm:hidden">{{ day[0] }}</span>
+          <span class="hidden sm:inline">{{ day }}</span>
         </div>
       </div>
 
@@ -397,13 +486,14 @@ function openModal(day) {
             <div
               v-for="(day, i) in calendarDays"
               :key="i"
-              class="group/day bg-white/60 dark:bg-slate-900/60 min-h-24 p-2 flex flex-col gap-1 relative"
+              @click="openModal(day)"
+              class="group/day bg-white/60 dark:bg-slate-900/60 min-h-16 sm:min-h-24 p-1 sm:p-2 flex flex-col gap-0.5 sm:gap-1 relative cursor-pointer"
               :class="!day.inMonth ? 'opacity-40' : ''"
             >
               <div class="flex items-center justify-between">
                 <span
                   :class="[
-                    'text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full shrink-0',
+                    'text-xs sm:text-sm font-medium w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full shrink-0',
                     isToday(day.date)
                       ? 'bg-indigo-600 text-white'
                       : 'text-slate-700 dark:text-slate-300'
@@ -411,25 +501,29 @@ function openModal(day) {
                 >
                   {{ day.date.getDate() }}
                 </span>
-                <button
-                  @click="openModal(day)"
-                  class="cursor-pointer opacity-0 group-hover/day:opacity-100 transition-opacity w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-indigo-600 dark:hover:bg-indigo-600 text-slate-500 hover:text-white flex items-center justify-center shrink-0"
+                <!-- Desktop hover hint; on touch the whole cell taps to add. -->
+                <span
+                  class="opacity-0 sm:group-hover/day:opacity-100 transition-opacity w-5 h-5 rounded-full bg-slate-200/80 dark:bg-slate-700/80 group-hover/day:bg-indigo-600 text-slate-500 group-hover/day:text-white flex items-center justify-center shrink-0"
                 >
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
-                </button>
+                </span>
               </div>
 
               <!-- Goal chips -->
-              <div class="flex flex-wrap gap-1 mt-1">
+              <div class="flex flex-wrap gap-1 mt-0.5 sm:mt-1">
                 <button
                   v-for="goal in goalsPerDay.get(dateKey(day.date)) ?? []"
                   :key="goal._id"
-                  @click.stop="toggleCompletion(goal, day.date, $event)"
+                  @click.stop="onChipClick(goal, day.date, $event)"
                   @contextmenu.stop="onChipRightClick($event, goal, day.date)"
+                  @touchstart.passive="onChipTouchStart($event, goal, day.date)"
+                  @touchend="cancelPress"
+                  @touchmove.passive="cancelPress"
+                  @touchcancel="cancelPress"
                   :class="[
-                    'relative w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold transition-all shrink-0',
+                    'goal-chip relative w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white text-[10px] sm:text-xs font-bold transition-all shrink-0 select-none',
                     isFuture(day.date) ? 'cursor-default opacity-40' : 'cursor-pointer group/chip',
                     isCompletedOnDay(goal, day.date) ? 'ring-2 ring-offset-1 ring-green-500' : '',
                   ]"
@@ -439,7 +533,7 @@ function openModal(day) {
                   <span class="group-hover/chip:opacity-0 transition-opacity select-none">
                     {{ goal.name[0].toUpperCase() }}
                   </span>
-                  <svg class="absolute opacity-0 group-hover/chip:opacity-100 transition-opacity w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                  <svg class="absolute opacity-0 group-hover/chip:opacity-100 transition-opacity w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </button>
@@ -482,33 +576,6 @@ function openModal(day) {
           </div>
         </div>
       </Transition>
-      <!-- Animation toggles panel: floats to the right of the centered calendar -->
-      <div class="absolute top-[36px] left-full ml-4 w-40 backdrop-blur-xl bg-white/60 dark:bg-slate-900/60 rounded-xl border border-white/60 dark:border-white/10 p-3 flex flex-col gap-3 shadow-lg shadow-indigo-500/10 dark:shadow-black/30">
-        <p class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Animations</p>
-        <div class="flex flex-col gap-2">
-          <!-- All -->
-          <div class="flex items-center gap-2">
-            <span class="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-200">✨ All</span>
-            <button type="button" @click="toggleAll"
-              :class="['relative w-8 h-4 rounded-full transition-colors shrink-0 cursor-pointer', animAll ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700']">
-              <span :class="['absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform', animAll ? 'translate-x-4' : 'translate-x-0']" />
-            </button>
-          </div>
-          <div class="border-t border-black/8 dark:border-white/8" />
-          <!-- Individual -->
-          <div v-for="item in [
-            { key: 'confetti', label: 'Confetti', emoji: '🎊' },
-            { key: 'flames',   label: 'Flames',   emoji: '🔥' },
-            { key: 'ring',     label: 'Ring',     emoji: '💫' },
-          ]" :key="item.key" class="flex items-center gap-2">
-            <span class="flex-1 text-xs text-slate-500 dark:text-slate-400">{{ item.emoji }} {{ item.label }}</span>
-            <button type="button" @click="anim[item.key] = !anim[item.key]"
-              :class="['relative w-8 h-4 rounded-full transition-colors shrink-0 cursor-pointer', anim[item.key] ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700']">
-              <span :class="['absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform', anim[item.key] ? 'translate-x-4' : 'translate-x-0']" />
-            </button>
-          </div>
-        </div>
-      </div>
       </div><!-- end mx-auto wrapper -->
     </main>
 
@@ -572,6 +639,14 @@ function openModal(day) {
 .slide-left-leave-to    { transform: translateX(-100%); }
 .slide-right-enter-from { transform: translateX(-100%); }
 .slide-right-leave-to   { transform: translateX(100%); }
+
+/* Stop the iOS long-press callout / selection so the context menu can open cleanly. */
+.goal-chip {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
 
 .fade-up-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }
 .fade-up-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }

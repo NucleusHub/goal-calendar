@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import WatchlistPickerModal from './WatchlistPickerModal.vue'
+import TemplateModal from '@core/TemplateModal.vue'
 import { useRegistry } from '@core/useRegistry.js'
 
 // "Import from Watchlist" only makes sense when the Watchlist app is present.
@@ -71,12 +72,6 @@ watch(() => props.show, (val) => {
   if (val) form.value = EMPTY()
 })
 
-function onKeydown(e) { if (e.key === 'Escape') emit('close') }
-watch(() => props.show, (val) => {
-  val ? window.addEventListener('keydown', onKeydown) : window.removeEventListener('keydown', onKeydown)
-})
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
-
 function formatDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
@@ -99,49 +94,27 @@ function handleSubmit() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="fade">
-      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="emit('close')" />
-        <!-- Floating left button panel -->
-        <div class="relative flex items-start gap-3">
-          <div v-if="watchlistInstalled" class="shrink-0 flex flex-col gap-2 bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl p-2">
-            <button
-              type="button"
-              @click="showWatchlistPicker = true"
-              title="Import from Watchlist"
-              :class="[
-                'cursor-pointer p-2 rounded-lg transition-colors',
-                form.watchlistItem
-                  ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-              ]"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75.125-.375-12a1.125 1.125 0 011.125-1.125h15.75A1.125 1.125 0 0120.625 6.5l-.375 12M6 18.375V7.875C6 7.254 6.504 6.75 7.125 6.75h9.75C17.496 6.75 18 7.254 18 7.875v10.5m0 0c0 .621-.504 1.125-1.125 1.125H7.125" />
-              </svg>
-            </button>
-          </div>
-
-        <!-- Modal panel -->
-        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="p-5 flex flex-col gap-5">
-
-            <!-- Title bar -->
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold text-slate-900 dark:text-white">New Goal</h2>
-              <button
-                @click="emit('close')"
-                class="cursor-pointer p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
+  <TemplateModal :show="show" header title="New Goal" size="sm" body-class="px-5 pb-5 pt-2" @cancel="emit('close')">
             <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
               <div class="flex flex-col gap-4">
+
+                <!-- Import from Watchlist -->
+                <button
+                  v-if="watchlistInstalled"
+                  type="button"
+                  @click="showWatchlistPicker = true"
+                  :class="[
+                    'cursor-pointer flex items-center justify-center gap-2 w-full py-2 rounded-lg text-sm font-medium border transition-colors',
+                    form.watchlistItem
+                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500/40'
+                      : 'text-slate-500 dark:text-slate-400 border-black/10 dark:border-white/10 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                  ]"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75.125-.375-12a1.125 1.125 0 011.125-1.125h15.75A1.125 1.125 0 0120.625 6.5l-.375 12M6 18.375V7.875C6 7.254 6.504 6.75 7.125 6.75h9.75C17.496 6.75 18 7.254 18 7.875v10.5m0 0c0 .621-.504 1.125-1.125 1.125H7.125" />
+                  </svg>
+                  Import from Watchlist
+                </button>
 
                 <!-- Name -->
                 <div class="flex flex-col gap-1.5">
@@ -343,12 +316,7 @@ function handleSubmit() {
 
               </div>
             </form>
-          </div>
-        </div>
-        </div><!-- end floating wrapper -->
-      </div>
-    </Transition>
-  </Teleport>
+  </TemplateModal>
 
   <WatchlistPickerModal
     :show="showWatchlistPicker"
@@ -358,9 +326,6 @@ function handleSubmit() {
 </template>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-
 .expand-enter-active, .expand-leave-active {
   transition: opacity 0.18s ease, max-height 0.2s ease;
   max-height: 60px;

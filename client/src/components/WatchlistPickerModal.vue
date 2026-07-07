@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch } from 'vue'
+import TemplateModal from '@core/TemplateModal.vue'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -41,14 +42,6 @@ watch(() => props.show, async (val) => {
   }
 })
 
-function onKeydown(e) {
-  if (e.key === 'Escape') emit('close')
-}
-watch(() => props.show, (val) => {
-  val ? window.addEventListener('keydown', onKeydown) : window.removeEventListener('keydown', onKeydown)
-})
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
-
 function selectItem(item) {
   emit('select', {
     _id: item._id,
@@ -79,42 +72,19 @@ function formatRuntime(item) {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="fade">
-      <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="emit('close')" />
-        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col" style="max-height: 80vh;">
-
-          <!-- Header -->
-          <div class="flex items-center justify-between px-5 pt-5 pb-4 shrink-0">
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Import from Watchlist</h2>
-            <button
-              @click="emit('close')"
-              class="cursor-pointer p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Search -->
-          <div class="px-5 pb-3 shrink-0">
-            <div class="relative">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-              <input
-                v-model="search"
-                type="text"
-                placeholder="Search…"
-                class="w-full bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg pl-9 pr-3 py-2 text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
+  <TemplateModal
+    :show="show"
+    header
+    searchable
+    v-model:search="search"
+    title="Import from Watchlist"
+    size="xl"
+    z="z-[300]"
+    body-class="px-5 pb-5 pt-1"
+    @cancel="emit('close')"
+  >
           <!-- Filter tabs -->
-          <div class="flex gap-1 px-5 pb-3 shrink-0">
+          <div class="flex gap-1 pb-3 sticky top-0">
             <button
               v-for="tab in FILTERS"
               :key="tab.value"
@@ -132,7 +102,7 @@ function formatRuntime(item) {
           </div>
 
           <!-- Body -->
-          <div class="flex-1 overflow-y-auto px-5 pb-5 min-h-0">
+          <div>
 
             <!-- Loading -->
             <div v-if="loading" class="flex items-center justify-center py-16">
@@ -191,13 +161,5 @@ function formatRuntime(item) {
             </div>
 
           </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  </TemplateModal>
 </template>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>

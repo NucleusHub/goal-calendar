@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch } from 'vue'
+import TemplateModal from '@core/TemplateModal.vue'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -21,12 +22,6 @@ watch(() => props.show, (val) => {
   }
 })
 
-function onKeydown(e) { if (e.key === 'Escape') emit('close') }
-watch(() => props.show, (val) => {
-  val ? window.addEventListener('keydown', onKeydown) : window.removeEventListener('keydown', onKeydown)
-})
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
-
 function handleSubmit() {
   if (!form.value.name.trim()) return
   emit('submit', { name: form.value.name.trim(), description: form.value.description, color: form.value.color })
@@ -35,26 +30,8 @@ function handleSubmit() {
 </script>
 
 <template>
-  <Teleport to="body">
-    <Transition name="fade">
-      <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/20 backdrop-blur-xl" @click="emit('close')" />
-        <div class="relative bg-white/25 dark:bg-white/8 border border-white/50 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md">
-          <div class="p-5 flex flex-col gap-5">
-
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Edit Goal</h2>
-              <button
-                @click="emit('close')"
-                class="cursor-pointer p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
+  <TemplateModal :show="show" header title="Edit Goal" size="sm" body-class="px-5 pb-5 pt-2" @cancel="emit('close')">
+    <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
 
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm text-slate-500 dark:text-slate-400">Name</label>
@@ -103,14 +80,5 @@ function handleSubmit() {
                 Save changes
               </button>
             </form>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  </TemplateModal>
 </template>
-
-<style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-</style>
