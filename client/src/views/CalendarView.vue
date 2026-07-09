@@ -16,7 +16,6 @@ const sidebarOpen = ref(false)
 const today = new Date()
 const currentYear = ref(today.getFullYear())
 const currentMonth = ref(today.getMonth())
-const direction = ref('next')
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -32,46 +31,133 @@ const monthLabelShort = computed(() =>
 // (the old floating panel sat off-screen on phones and most laptops).
 const animPanelOpen = ref(false)
 
-function prevMonth() {
-  direction.value = 'prev'
-  if (currentMonth.value === 0) { currentMonth.value = 11; currentYear.value-- }
-  else currentMonth.value--
+// ── Month carousel ──────────────────────────────────────────────────────────
+// Three months are always mounted (prev / current / next) in a horizontal
+// track, so the neighbouring months are visible the instant you start dragging
+// instead of a blank gap. Index 1 (current) is centred; drag/commit slides the
+// track by exactly one panel, then we swap the base month and recentre.
+const viewport = ref(null)
+const dragX = ref(0)        // px the track is dragged from its centred position
+const dragging = ref(false) // finger is down → follow 1:1 with no transition
+const instant = ref(false)  // recentre after a commit without animating
+const animating = ref(false)
+// For jumps further than one month (e.g. "Today"), the natural neighbour isn't
+// the destination — so we load the target month into the travel-side panel for
+// the duration of the slide, then swap the base month and clear this.
+const jumpOverride = ref(null) // { side: 'prev' | 'next', year, month } | null
+
+function shiftMonth(year, month, delta) {
+  const idx = year * 12 + month + delta
+  return { year: Math.floor(idx / 12), month: ((idx % 12) + 12) % 12 }
 }
 
-function nextMonth() {
-  direction.value = 'next'
-  if (currentMonth.value === 11) { currentMonth.value = 0; currentYear.value++ }
-  else currentMonth.value++
+function buildDays(year, month) {
+  const last = new Date(year, month + 1, 0)
+  const startPad = (new Date(year, month, 1).getDay() + 6) % 7
+  const days = []
+  for (let i = startPad - 1; i >= 0; i--) days.push({ date: new Date(year, month, -i), inMonth: false })
+  for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(year, month, d), inMonth: true })
+  while (days.length < 42) days.push({ date: new Date(year, month + 1, days.length - startPad - last.getDate() + 1), inMonth: false })
+  return days
 }
+
+// [prev, current, next] — index 1 is the centred, visible month. A jumpOverride
+// replaces the travel-side neighbour so a far "Today" jump can slide to it.
+const panels = computed(() => [-1, 0, 1].map(delta => {
+  let { year, month } = shiftMonth(currentYear.value, currentMonth.value, delta)
+  const ov = jumpOverride.value
+  if (ov && ((ov.side === 'next' && delta === 1) || (ov.side === 'prev' && delta === -1))) {
+    year = ov.year
+    month = ov.month
+  }
+  return { key: `${year}-${month}`, year, month, days: buildDays(year, month) }
+}))
+
+// Slide to a month `delta` away, then swap the base month and jump the track
+// back to centre without animation — the revealed panel already shows the
+// destination content, so the recentre is invisible. For |delta| > 1 the
+// destination is loaded into the neighbour first so the slide has something
+// real to move toward (one slide straight to the target, not month-by-month).
+function slideTo(delta) {
+  if (animating.value) { dragging.value = false; dragX.value = 0; return }
+  const w = viewport.value?.offsetWidth ?? 0
+  if (delta === 0 || w === 0) { dragging.value = false; dragX.value = 0; return }
+  const target = shiftMonth(currentYear.value, currentMonth.value, delta)
+
+  const run = () => {
+    animating.value = true
+    dragging.value = false
+    dragX.value = delta > 0 ? -w : w
+    setTimeout(() => {
+      instant.value = true
+      currentYear.value = target.year
+      currentMonth.value = target.month
+      jumpOverride.value = null
+      dragX.value = 0
+      nextTick(() => requestAnimationFrame(() => {
+        instant.value = false
+        animating.value = false
+      }))
+    }, 260)
+  }
+
+  if (Math.abs(delta) === 1) {
+    run()
+  } else {
+    // Preload the destination into the travel-side panel, let it paint, then slide.
+    jumpOverride.value = { side: delta > 0 ? 'next' : 'prev', year: target.year, month: target.month }
+    nextTick(() => requestAnimationFrame(run))
+  }
+}
+
+function prevMonth() { slideTo(-1) }
+function nextMonth() { slideTo(1) }
 
 function goToday() {
-  const ty = today.getFullYear()
-  const tm = today.getMonth()
-  const cur = currentYear.value * 12 + currentMonth.value
-  const target = ty * 12 + tm
-  direction.value = target >= cur ? 'next' : 'prev'
-  currentYear.value = ty
-  currentMonth.value = tm
+  const delta = (today.getFullYear() * 12 + today.getMonth()) - (currentYear.value * 12 + currentMonth.value)
+  if (delta !== 0) slideTo(delta)
 }
 
-const calendarDays = computed(() => {
-  const first = new Date(currentYear.value, currentMonth.value, 1)
-  const last = new Date(currentYear.value, currentMonth.value + 1, 0)
-  const startPad = (first.getDay() + 6) % 7
-  const days = []
+// ── Swipe / drag to change months (phone) ───────────────────────────────────
+let touchStartX = 0
+let touchStartY = 0
+let axisLock = null // 'x' | 'y' — set once the gesture direction is clear
+let didSwipe = false // guards the click that fires after a swipe
 
-  for (let i = startPad - 1; i >= 0; i--) {
-    days.push({ date: new Date(currentYear.value, currentMonth.value, -i), inMonth: false })
-  }
-  for (let d = 1; d <= last.getDate(); d++) {
-    days.push({ date: new Date(currentYear.value, currentMonth.value, d), inMonth: true })
-  }
-  while (days.length < 42) {
-    days.push({ date: new Date(currentYear.value, currentMonth.value + 1, days.length - startPad - last.getDate() + 1), inMonth: false })
-  }
+const SWIPE_THRESHOLD = 60
 
-  return days
-})
+function onGridTouchStart(e) {
+  if (animating.value || e.touches.length !== 1) return
+  touchStartX = e.touches[0].clientX
+  touchStartY = e.touches[0].clientY
+  axisLock = null
+  didSwipe = false
+  dragging.value = true
+}
+
+function onGridTouchMove(e) {
+  if (!dragging.value || e.touches.length !== 1) return
+  const dx = e.touches[0].clientX - touchStartX
+  const dy = e.touches[0].clientY - touchStartY
+  if (!axisLock && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+    axisLock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+  }
+  // Follow the finger only for horizontal drags; let the page scroll vertically.
+  if (axisLock === 'x') dragX.value = dx
+}
+
+function onGridTouchEnd() {
+  if (!dragging.value) return
+  const dx = dragX.value
+  if (axisLock === 'x' && Math.abs(dx) > SWIPE_THRESHOLD) {
+    didSwipe = true
+    slideTo(dx < 0 ? 1 : -1)
+  } else {
+    dragging.value = false // spring back to centre
+    dragX.value = 0
+  }
+  axisLock = null
+}
 
 function isToday(date) {
   return (
@@ -81,7 +167,10 @@ function isToday(date) {
   )
 }
 
-const calendarKey = computed(() => `${currentYear.value}-${currentMonth.value}`)
+function isWeekend(date) {
+  const d = date.getDay()
+  return d === 0 || d === 6
+}
 
 // ── Goals ──────────────────────────────────────────────────────────────────
 const goals = ref([])
@@ -147,9 +236,11 @@ function appearsOnDay(goal, date) {
 
 const goalsPerDay = computed(() => {
   const map = new Map()
-  for (const day of calendarDays.value) {
-    const key = dateKey(day.date)
-    map.set(key, goals.value.filter(g => appearsOnDay(g, day.date)))
+  for (const panel of panels.value) {
+    for (const day of panel.days) {
+      const key = dateKey(day.date)
+      if (!map.has(key)) map.set(key, goals.value.filter(g => appearsOnDay(g, day.date)))
+    }
   }
   return map
 })
@@ -325,6 +416,7 @@ function cancelPress() {
 
 // A completed long-press must not also toggle completion on finger-lift.
 function onChipClick(goal, date, e) {
+  if (didSwipe) return
   if (longPressed) { longPressed = false; return }
   toggleCompletion(goal, date, e)
 }
@@ -357,6 +449,7 @@ const modalOpen = ref(false)
 const selectedDay = ref(null)
 
 function openModal(day) {
+  if (didSwipe) return
   selectedDay.value = day
   modalOpen.value = true
 }
@@ -381,31 +474,23 @@ function openModal(day) {
         </button>
       </template>
 
-      <!-- Month navigation — centered via the grid's auto column -->
-      <button
-        @click="prevMonth"
-        class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
-      >
+      <!-- Month navigation — arrows flank the label, all centered by the grid -->
+      <button @click="prevMonth" aria-label="Previous month" class="nav-arrow">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
       </button>
-      <h1 class="text-sm sm:text-base font-semibold min-w-0 sm:min-w-40 text-center whitespace-nowrap px-1">
+      <h1 class="nav-month">
         <span class="sm:hidden">{{ monthLabelShort }}</span>
         <span class="hidden sm:inline">{{ monthLabel }}</span>
       </h1>
-      <button
-        @click="nextMonth"
-        class="cursor-pointer p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
-      >
+      <button @click="nextMonth" aria-label="Next month" class="nav-arrow">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
       </button>
-      <button
-        @click="goToday"
-        class="cursor-pointer px-2.5 sm:px-3 py-1 text-xs font-medium rounded-lg bg-black/8 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-black/12 dark:hover:bg-white/15 transition-colors"
-      >
+      <button @click="goToday" class="today-btn">
+        <span class="today-dot" />
         Today
       </button>
 
@@ -462,92 +547,103 @@ function openModal(day) {
     </AppHeader>
 
     <!-- Calendar -->
-    <main class="relative z-10 flex-1 p-4 sm:p-6 w-full">
-      <div class="relative max-w-4xl mx-auto">
-      <!-- Day labels -->
-      <div class="grid grid-cols-7 mb-1">
-        <div
-          v-for="day in DAYS"
-          :key="day"
-          class="text-center text-xs font-medium text-slate-400 dark:text-slate-500 py-2"
-        >
-          <span class="sm:hidden">{{ day[0] }}</span>
-          <span class="hidden sm:inline">{{ day }}</span>
-        </div>
-      </div>
-
-      <!-- Animated day grid -->
-      <div class="overflow-hidden rounded-xl relative">
-        <Transition :name="direction === 'next' ? 'slide-left' : 'slide-right'">
+    <main class="relative z-10 flex-1 px-3 sm:px-6 pt-2 sm:pt-4 pb-8 w-full">
+      <div class="relative max-w-3xl mx-auto">
+      <div class="cal-card">
+        <!-- Weekday labels -->
+        <div class="grid grid-cols-7 px-1 mb-1.5 sm:mb-2">
           <div
-            :key="calendarKey"
-            class="grid grid-cols-7 gap-px bg-slate-200/60 dark:bg-slate-800/60 border border-white/40 dark:border-white/8"
+            v-for="(day, di) in DAYS"
+            :key="day"
+            class="text-center text-[11px] font-semibold uppercase tracking-[0.14em] py-1"
+            :class="di >= 5 ? 'text-indigo-500/70 dark:text-indigo-300/60' : 'text-slate-400/90 dark:text-slate-500'"
           >
-            <div
-              v-for="(day, i) in calendarDays"
-              :key="i"
-              @click="openModal(day)"
-              class="group/day bg-white/60 dark:bg-slate-900/60 min-h-16 sm:min-h-24 p-1 sm:p-2 flex flex-col gap-0.5 sm:gap-1 relative cursor-pointer"
-              :class="!day.inMonth ? 'opacity-40' : ''"
-            >
-              <div class="flex items-center justify-between">
-                <span
-                  :class="[
-                    'text-xs sm:text-sm font-medium w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full shrink-0',
-                    isToday(day.date)
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-700 dark:text-slate-300'
-                  ]"
-                >
-                  {{ day.date.getDate() }}
-                </span>
-                <!-- Desktop hover hint; on touch the whole cell taps to add. -->
-                <span
-                  class="opacity-0 sm:group-hover/day:opacity-100 transition-opacity w-5 h-5 rounded-full bg-slate-200/80 dark:bg-slate-700/80 group-hover/day:bg-indigo-600 text-slate-500 group-hover/day:text-white flex items-center justify-center shrink-0"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                </span>
-              </div>
+            <span class="sm:hidden">{{ day[0] }}</span>
+            <span class="hidden sm:inline">{{ day }}</span>
+          </div>
+        </div>
 
-              <!-- Goal chips -->
-              <div class="flex flex-wrap gap-1 mt-0.5 sm:mt-1">
-                <button
-                  v-for="goal in goalsPerDay.get(dateKey(day.date)) ?? []"
-                  :key="goal._id"
-                  @click.stop="onChipClick(goal, day.date, $event)"
-                  @contextmenu.stop="onChipRightClick($event, goal, day.date)"
-                  @touchstart.passive="onChipTouchStart($event, goal, day.date)"
-                  @touchend="cancelPress"
-                  @touchmove.passive="cancelPress"
-                  @touchcancel="cancelPress"
-                  :class="[
-                    'goal-chip relative w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white text-[10px] sm:text-xs font-bold transition-all shrink-0 select-none',
-                    isFuture(day.date) ? 'cursor-default opacity-40' : 'cursor-pointer group/chip',
-                    isCompletedOnDay(goal, day.date) ? 'ring-2 ring-offset-1 ring-green-500' : '',
-                  ]"
-                  :style="{ backgroundColor: goal.color }"
-                  :title="goal.name"
+        <!-- Swipeable month carousel: prev / current / next always mounted so
+             the neighbouring months are visible the moment a drag begins. -->
+        <div
+          ref="viewport"
+          class="overflow-hidden relative"
+          @touchstart.passive="onGridTouchStart"
+          @touchmove.passive="onGridTouchMove"
+          @touchend="onGridTouchEnd"
+          @touchcancel="onGridTouchEnd"
+        >
+          <div
+            class="month-track"
+            :class="{ 'is-dragging': dragging, 'is-instant': instant }"
+            :style="{ transform: `translateX(calc(-33.3333% + ${dragX}px))` }"
+          >
+            <div v-for="panel in panels" :key="panel.key" class="month-panel">
+              <div class="grid grid-cols-7 gap-1 sm:gap-1.5">
+                <div
+                  v-for="(day, i) in panel.days"
+                  :key="i"
+                  @click="openModal(day)"
+                  class="day-cell group/day min-h-[60px] sm:min-h-[104px] p-1 sm:p-2 flex flex-col gap-1 relative cursor-pointer"
+                  :class="{ 'is-outside': !day.inMonth, 'is-today': isToday(day.date) }"
                 >
-                  <span class="group-hover/chip:opacity-0 transition-opacity select-none">
-                    {{ goal.name[0].toUpperCase() }}
-                  </span>
-                  <svg class="absolute opacity-0 group-hover/chip:opacity-100 transition-opacity w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
+                  <div class="flex items-center justify-between">
+                    <span
+                      class="text-xs sm:text-sm font-semibold tabular-nums w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full shrink-0 transition-colors"
+                      :class="isToday(day.date)
+                        ? 'today-num'
+                        : isWeekend(day.date)
+                          ? 'text-slate-400 dark:text-slate-500'
+                          : 'text-slate-600 dark:text-slate-200'"
+                    >
+                      {{ day.date.getDate() }}
+                    </span>
+                    <!-- Desktop hover hint; on touch the whole cell taps to add. -->
+                    <span class="add-hint opacity-0 sm:group-hover/day:opacity-100">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </span>
+                  </div>
+
+                  <!-- Goal chips: outlined when pending, solid + glow when done -->
+                  <div class="flex flex-wrap gap-1 sm:gap-1.5 mt-0.5">
+                    <button
+                      v-for="goal in goalsPerDay.get(dateKey(day.date)) ?? []"
+                      :key="goal._id"
+                      @click.stop="onChipClick(goal, day.date, $event)"
+                      @contextmenu.stop="onChipRightClick($event, goal, day.date)"
+                      @touchstart.passive="onChipTouchStart($event, goal, day.date)"
+                      @touchend="cancelPress"
+                      @touchmove.passive="cancelPress"
+                      @touchcancel="cancelPress"
+                      class="chip w-3.5 h-3.5 sm:w-6 sm:h-6 text-[10px] sm:text-xs"
+                      :class="[
+                        isFuture(day.date) ? 'is-future' : 'is-actionable',
+                        isCompletedOnDay(goal, day.date) ? 'is-done' : '',
+                      ]"
+                      :style="{ '--c': goal.color }"
+                      :title="goal.name"
+                    >
+                      <!-- Compact dots on phone; lettered chips with a check on ≥sm -->
+                      <svg v-if="isCompletedOnDay(goal, day.date)" class="hidden sm:block w-3 h-3" fill="none" stroke="currentColor" stroke-width="3.25" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span v-else class="hidden sm:block select-none">{{ goal.name[0].toUpperCase() }}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </Transition>
-      </div>
+        </div>
+      </div><!-- end cal-card -->
 
       <!-- Streaks -->
       <Transition name="fade-up">
-        <div v-if="streakGoals.length" class="mt-6 flex flex-col gap-3">
-          <p class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Active streaks</p>
-          <div class="flex flex-wrap gap-2">
+        <div v-if="streakGoals.length" class="mt-6 flex flex-col gap-3 px-1">
+          <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em]">Active streaks</p>
+          <div class="flex flex-wrap gap-2.5">
             <div
               v-for="{ goal, streak } in streakGoals"
               :key="goal._id"
@@ -566,11 +662,12 @@ function openModal(day) {
                   :filter="`url(#glow-${goal._id})`"
                 />
               </svg>
-              <div class="relative flex items-center gap-2 px-3 py-2 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 rounded-[10px] shadow-sm border border-white/50 dark:border-white/8">
-                <div class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ backgroundColor: goal.color }" />
+              <div class="streak-pill relative flex items-center gap-2 pl-3 pr-3.5 py-2 rounded-[10px]">
+                <div class="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" :style="{ backgroundColor: goal.color }" />
                 <span class="text-sm font-medium text-slate-800 dark:text-slate-100">{{ goal.name }}</span>
-                <span class="text-sm font-bold text-orange-500">{{ streak }}</span>
-                <span class="text-base leading-none">🔥</span>
+                <span class="ml-0.5 flex items-center gap-1 text-sm font-bold tabular-nums text-orange-500">
+                  {{ streak }}<span class="text-base leading-none">🔥</span>
+                </span>
               </div>
             </div>
           </div>
@@ -622,30 +719,175 @@ function openModal(day) {
 </template>
 
 <style scoped>
-.slide-left-enter-active,
-.slide-left-leave-active,
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* ── Header nav ──────────────────────────────────────────────────────────── */
+.nav-arrow {
+  display: flex;
+  padding: 7px;
+  border-radius: 9999px;
+  color: rgb(100 116 139);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.nav-arrow:hover { color: rgb(15 23 42); background: rgba(15, 23, 42, 0.06); }
+.dark .nav-arrow { color: rgb(148 163 184); }
+.dark .nav-arrow:hover { color: #fff; background: rgba(255, 255, 255, 0.10); }
+
+.nav-month {
+  min-width: 108px;
+  padding: 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 640px) { .nav-month { min-width: 176px; font-size: 16px; } }
+
+.today-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(71 85 105);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.today-btn:hover { background: rgba(15, 23, 42, 0.05); border-color: rgba(15, 23, 42, 0.16); }
+.dark .today-btn { color: rgb(203 213 225); border-color: rgba(255, 255, 255, 0.14); }
+.dark .today-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.22); }
+.today-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.7);
 }
 
-.slide-left-leave-active,
-.slide-right-leave-active {
-  position: absolute;
-  inset: 0;
+/* ── Calendar card: the elevated glass surface the month floats in ───────── */
+.cal-card {
+  padding: 12px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.55));
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 32px 64px -32px rgba(49, 46, 129, 0.4),
+    0 8px 20px -14px rgba(15, 23, 42, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+@media (min-width: 640px) { .cal-card { padding: 20px; border-radius: 32px; } }
+.dark .cal-card {
+  background: linear-gradient(180deg, rgba(42, 35, 78, 0.72), rgba(24, 20, 48, 0.62));
+  border-color: rgba(150, 130, 255, 0.16);
+  box-shadow:
+    0 36px 72px -32px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(180, 150, 255, 0.09);
 }
 
-.slide-left-enter-from  { transform: translateX(100%); }
-.slide-left-leave-to    { transform: translateX(-100%); }
-.slide-right-enter-from { transform: translateX(-100%); }
-.slide-right-leave-to   { transform: translateX(100%); }
+/* ── Day cells: borderless, airy, highlight on hover ─────────────────────── */
+.day-cell {
+  border-radius: 14px;
+  transition: background-color 0.15s ease;
+}
+.day-cell.is-outside { opacity: 0.42; }
+.day-cell.is-today { background: rgba(99, 102, 241, 0.07); }
+.dark .day-cell.is-today { background: rgba(129, 140, 248, 0.10); }
+@media (hover: hover) {
+  .day-cell:hover { background: rgba(255, 255, 255, 0.6); }
+  .dark .day-cell:hover { background: rgba(255, 255, 255, 0.05); }
+  .day-cell.is-today:hover { background: rgba(99, 102, 241, 0.12); }
+  .dark .day-cell.is-today:hover { background: rgba(129, 140, 248, 0.15); }
+}
 
-/* Stop the iOS long-press callout / selection so the context menu can open cleanly. */
-.goal-chip {
+/* Today's date marker */
+.today-num {
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 3px 10px -2px rgba(99, 102, 241, 0.6);
+}
+
+/* Desktop "add goal" affordance */
+.add-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  color: rgb(148 163 184);
+  background: rgba(100, 116, 139, 0.14);
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.group\/day:hover .add-hint { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+
+/* ── Goal chips: outlined = pending, solid + glow = done ─────────────────── */
+.chip {
+  --c: #6366f1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--c) 42%, transparent);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
   touch-action: manipulation;
+}
+.dark .chip { background: color-mix(in srgb, var(--c) 24%, transparent); }
+.chip.is-done {
+  color: #fff;
+  background: var(--c);
+  border-color: transparent;
+  box-shadow: 0 3px 10px -2px color-mix(in srgb, var(--c) 70%, transparent);
+}
+.chip.is-actionable { cursor: pointer; }
+.chip.is-actionable:hover { transform: scale(1.15) translateY(-1px); }
+.chip.is-actionable:active { transform: scale(0.92); }
+.chip.is-future { opacity: 0.4; cursor: default; }
+
+/* ── Streak pills ────────────────────────────────────────────────────────── */
+.streak-pill {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 14px -8px rgba(15, 23, 42, 0.25);
+}
+.dark .streak-pill {
+  background: rgba(30, 27, 58, 0.7);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Month carousel: a 300%-wide track of three equal panels. Centred on the
+   middle panel via translateX(-33.3333%); the finger/commit adds a px offset.
+   Transition off while dragging (follow 1:1) or recentring (invisible jump). */
+.month-track {
+  display: flex;
+  width: 300%;
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+  touch-action: pan-y;
+}
+.month-track.is-dragging,
+.month-track.is-instant {
+  transition: none;
+}
+.month-panel {
+  flex: 0 0 33.3333%;
+  width: 33.3333%;
 }
 
 .fade-up-enter-active { transition: opacity 0.3s ease, transform 0.3s ease; }

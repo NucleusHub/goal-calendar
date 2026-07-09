@@ -2,7 +2,7 @@
   "id": "goal-calendar",
   "name": "Goals",
   "description": "Calendar & tracking",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "manifestVersion": 1,
   "compatibility": {
     "nucleus": ">=0.1.0 <1.0.0"
