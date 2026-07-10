@@ -466,7 +466,7 @@ function openModal(day) {
       <template #left>
         <button
           @click="sidebarOpen = true"
-          class="cursor-pointer p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
+          class="nuc-press cursor-pointer p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -475,7 +475,7 @@ function openModal(day) {
       </template>
 
       <!-- Month navigation — arrows flank the label, all centered by the grid -->
-      <button @click="prevMonth" aria-label="Previous month" class="nav-arrow">
+      <button @click="prevMonth" aria-label="Previous month" class="nuc-press nav-arrow">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
@@ -484,12 +484,12 @@ function openModal(day) {
         <span class="sm:hidden">{{ monthLabelShort }}</span>
         <span class="hidden sm:inline">{{ monthLabel }}</span>
       </h1>
-      <button @click="nextMonth" aria-label="Next month" class="nav-arrow">
+      <button @click="nextMonth" aria-label="Next month" class="nuc-press nav-arrow">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
       </button>
-      <button @click="goToday" class="today-btn">
+      <button @click="goToday" class="nuc-press today-btn">
         <span class="today-dot" />
         Today
       </button>
@@ -501,7 +501,7 @@ function openModal(day) {
             @click="animPanelOpen = !animPanelOpen"
             title="Animations"
             :class="[
-              'cursor-pointer p-2 rounded-lg transition-colors',
+              'nuc-press cursor-pointer p-2 rounded-lg transition-colors',
               animPanelOpen
                 ? 'text-indigo-600 dark:text-indigo-400 bg-black/8 dark:bg-white/10'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10'
@@ -515,7 +515,7 @@ function openModal(day) {
           <div v-if="animPanelOpen" class="fixed inset-0 z-40" @click="animPanelOpen = false" />
           <div
             v-if="animPanelOpen"
-            class="absolute right-0 top-full mt-2 w-48 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 rounded-xl border border-white/60 dark:border-white/10 p-3 flex flex-col gap-3 shadow-lg shadow-indigo-500/10 dark:shadow-black/30"
+            class="nuc-in-scale absolute right-0 top-full mt-2 w-48 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 rounded-xl border border-white/60 dark:border-white/10 p-3 flex flex-col gap-3 shadow-lg shadow-indigo-500/10 dark:shadow-black/30"
           >
             <p class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Animations</p>
             <div class="flex flex-col gap-2">
@@ -549,7 +549,7 @@ function openModal(day) {
     <!-- Calendar -->
     <main class="relative z-10 flex-1 px-3 sm:px-6 pt-2 sm:pt-4 pb-8 w-full">
       <div class="relative max-w-3xl mx-auto">
-      <div class="cal-card">
+      <div class="cal-card nuc-in">
         <!-- Weekday labels -->
         <div class="grid grid-cols-7 px-1 mb-1.5 sm:mb-2">
           <div
