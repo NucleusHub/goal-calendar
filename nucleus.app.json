@@ -10,6 +10,9 @@
   "route": "/goals",
   "icon": "icon.svg",
   "category": "productivity",
+  "localization": {
+    "defaultLanguage": "en-US"
+  },
   "hub": {
     "showInSidebar": true,
     "showOnDashboard": true
