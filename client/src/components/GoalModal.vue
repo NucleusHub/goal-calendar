@@ -3,6 +3,9 @@ import { ref, computed, watch } from 'vue'
 import WatchlistPickerModal from './WatchlistPickerModal.vue'
 import TemplateModal from '@core/TemplateModal.vue'
 import { useRegistry } from '@core/useRegistry.js'
+import { Icon } from '@core/icons'
+import ArchiveBoxIcon from '@/assets/icons/archive-box.svg?component'
+import PencilSquareIcon from '@/assets/icons/pencil-square.svg?component'
 
 // "Import from Watchlist" only makes sense when the Watchlist app is present.
 const { hasApp } = useRegistry()
@@ -110,9 +113,7 @@ function handleSubmit() {
                       : 'text-slate-500 dark:text-slate-400 border-black/10 dark:border-white/10 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/5'
                   ]"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75.125-.375-12a1.125 1.125 0 011.125-1.125h15.75A1.125 1.125 0 0120.625 6.5l-.375 12M6 18.375V7.875C6 7.254 6.504 6.75 7.125 6.75h9.75C17.496 6.75 18 7.254 18 7.875v10.5m0 0c0 .621-.504 1.125-1.125 1.125H7.125" />
-                  </svg>
+                  <ArchiveBoxIcon class="w-4 h-4" />
                   Import from Watchlist
                 </button>
 
@@ -260,9 +261,7 @@ function handleSubmit() {
                       :style="!COLORS.includes(form.color) ? { backgroundColor: form.color, outlineColor: form.color, outline: '2px solid', outlineOffset: '2px' } : {}"
                       title="Custom color"
                     >
-                      <svg v-if="COLORS.includes(form.color)" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
-                      </svg>
+                      <PencilSquareIcon v-if="COLORS.includes(form.color)" class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 pointer-events-none" />
                       <input
                         type="color"
                         :value="form.color"
@@ -300,9 +299,7 @@ function handleSubmit() {
                       class="cursor-pointer shrink-0 p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
                       title="Remove link"
                     >
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <Icon name="close" class="w-3.5 h-3.5" :sw="2.5" />
                     </button>
                   </div>
                 </Transition>

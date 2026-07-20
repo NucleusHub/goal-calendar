@@ -10,6 +10,9 @@ import GoalContextMenu from '@/components/GoalContextMenu.vue'
 import EditGoalModal from '@/components/EditGoalModal.vue'
 import DeleteGoalModal from '@/components/DeleteGoalModal.vue'
 import { getGoals, createGoal, updateGoal, deleteGoal, toggleGoalDate } from '@/api/goals.js'
+import { Icon } from '@core/icons'
+import ChevronLeftIcon from '@/assets/icons/chevron-left.svg?component'
+import SparklesIcon from '@/assets/icons/sparkles.svg?component'
 
 const sidebarOpen = ref(false)
 
@@ -468,26 +471,20 @@ function openModal(day) {
           @click="sidebarOpen = true"
           class="nuc-press cursor-pointer p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10 transition-colors"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
+          <Icon name="menu" class="w-5 h-5" />
         </button>
       </template>
 
       <!-- Month navigation — arrows flank the label, all centered by the grid -->
       <button @click="prevMonth" aria-label="Previous month" class="nuc-press nav-arrow">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-        </svg>
+        <ChevronLeftIcon class="w-4 h-4" />
       </button>
       <h1 class="nav-month">
         <span class="sm:hidden">{{ monthLabelShort }}</span>
         <span class="hidden sm:inline">{{ monthLabel }}</span>
       </h1>
       <button @click="nextMonth" aria-label="Next month" class="nuc-press nav-arrow">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-        </svg>
+        <Icon name="chevronRight" class="w-4 h-4" :sw="2.5" />
       </button>
       <button @click="goToday" class="nuc-press today-btn">
         <span class="today-dot" />
@@ -507,9 +504,7 @@ function openModal(day) {
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/8 dark:hover:bg-white/10'
             ]"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
-            </svg>
+            <SparklesIcon class="w-5 h-5" />
           </button>
 
           <div v-if="animPanelOpen" class="fixed inset-0 z-40" @click="animPanelOpen = false" />
@@ -600,9 +595,7 @@ function openModal(day) {
                     </span>
                     <!-- Desktop hover hint; on touch the whole cell taps to add. -->
                     <span class="add-hint opacity-0 sm:group-hover/day:opacity-100">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                      </svg>
+                      <Icon name="plus" class="w-3 h-3" :sw="2.5" />
                     </span>
                   </div>
 
@@ -626,9 +619,7 @@ function openModal(day) {
                       :title="goal.name"
                     >
                       <!-- Compact dots on phone; lettered chips with a check on ≥sm -->
-                      <svg v-if="isCompletedOnDay(goal, day.date)" class="hidden sm:block w-3 h-3" fill="none" stroke="currentColor" stroke-width="3.25" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+                      <Icon name="checkBold" v-if="isCompletedOnDay(goal, day.date)" class="hidden sm:block w-3 h-3" :sw="3.25" />
                       <span v-else class="hidden sm:block select-none">{{ goal.name[0].toUpperCase() }}</span>
                     </button>
                   </div>

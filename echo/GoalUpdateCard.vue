@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import EchoEmbedContainer from '@core/echo/EchoEmbedContainer.vue'
 import EchoAddButton from '@core/echo/EchoAddButton.vue'
+import { Icon } from '@core/icons'
+import ClockIcon from './icons/clock.svg?component'
 
 // Renderer for "goal.update" messages. Lives in Goals (next to its
 // manifest.echo.json) and is auto-registered into Echo via this app's
@@ -56,8 +58,8 @@ async function addToGoals() {
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
         :style="{ background: (payload.color || '#6366f1') + '22', color: payload.color || '#6366f1' }"
       >
-        <svg v-if="completed" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <Icon name="checkBold" v-if="completed" :sw="2.25" />
+        <ClockIcon v-else width="20" height="20" />
       </span>
       <div class="min-w-0">
         <p class="truncate font-medium text-slate-900 dark:text-white">{{ payload.name }}</p>

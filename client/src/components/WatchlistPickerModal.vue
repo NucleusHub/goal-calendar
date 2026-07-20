@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import TemplateModal from '@core/TemplateModal.vue'
+import { Icon, Spinner } from '@core/icons'
+import ArchiveBoxIcon from '@/assets/icons/archive-box.svg?component'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -106,17 +108,12 @@ function formatRuntime(item) {
 
             <!-- Loading -->
             <div v-if="loading" class="flex items-center justify-center py-16">
-              <svg class="w-8 h-8 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
+              <Spinner class="w-8 h-8 text-indigo-500 animate-spin" />
             </div>
 
             <!-- Empty -->
             <div v-else-if="filtered.length === 0" class="flex flex-col items-center justify-center py-16 gap-2 text-slate-400 dark:text-slate-500">
-              <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75.125-.375-12a1.125 1.125 0 011.125-1.125h15.75A1.125 1.125 0 0120.625 6.5l-.375 12M6 18.375V7.875C6 7.254 6.504 6.75 7.125 6.75h9.75C17.496 6.75 18 7.254 18 7.875v10.5m0 0c0 .621-.504 1.125-1.125 1.125H7.125" />
-              </svg>
+              <ArchiveBoxIcon class="w-10 h-10" />
               <span class="text-sm">No items found</span>
             </div>
 
@@ -140,9 +137,7 @@ function formatRuntime(item) {
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                   <div v-else class="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 20.25h12m-7.5-3v3m3-3v3m-10.125-3h17.25c.621 0 1.125-.504 1.125-1.125V4.875c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125z" />
-                    </svg>
+                    <Icon name="calendar" class="w-8 h-8" :sw="1.5" />
                   </div>
                 </div>
                 <!-- Info -->
