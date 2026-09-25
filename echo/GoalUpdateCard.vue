@@ -58,7 +58,7 @@ async function addToGoals() {
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
         :style="{ background: (payload.color || '#6366f1') + '22', color: payload.color || '#6366f1' }"
       >
-        <Icon name="checkBold" v-if="completed" :sw="2.25" />
+        <Icon width="20" height="20" name="checkBold" v-if="completed" :sw="2.25" />
         <ClockIcon v-else width="20" height="20" />
       </span>
       <div class="min-w-0">
