@@ -1,7 +1,5 @@
 import { createApiClient } from '@core/createApiClient.js'
 
-// Endpoint map over the shared @core REST helper (credentials, JSON, error
-// shaping, 403 APP_DISABLED handling all live there).
 const api = createApiClient('/api/goals')
 
 export const getGoals = () => api.get('')

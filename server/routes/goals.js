@@ -10,8 +10,6 @@ function requireAdmin(req, res, next) {
   next()
 }
 
-// Called by the admin panel when a user is deleted: drop all their goals.
-//   POST /api/goals/users/:userId/teardown
 router.post('/users/:userId/teardown', requireAdmin, async (req, res) => {
   try {
     const { deletedCount } = await Goal.deleteMany({ profileId: req.params.userId })

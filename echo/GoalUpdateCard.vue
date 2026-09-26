@@ -5,18 +5,12 @@ import EchoAddButton from '@core/echo/EchoAddButton.vue'
 import { Icon } from '@core/icons'
 import ClockIcon from './icons/clock.svg?component'
 
-// Renderer for "goal.update" messages. Lives in Goals (next to its
-// manifest.echo.json) and is auto-registered into Echo via this app's
-// integration.echo.js.
-// payload = { goalId, name, color, status, streak, date,
-//             repeat, customInterval, customUnit, startDate }.
 const props = defineProps({
   payload: { type: Object, required: true },
 })
 
 const completed = computed(() => props.payload.status === 'completed')
 
-// Human-readable cadence, inherited from the source goal.
 const REPEAT_LABEL = {
   none: 'One-time', everyday: 'Daily', weekday: 'Weekdays', weekend: 'Weekends',
   week: 'Weekly', month: 'Monthly', year: 'Yearly',
@@ -27,8 +21,6 @@ const repeatLabel = computed(() => {
   return REPEAT_LABEL[p.repeat] || ''
 })
 
-// "Add" → create the goal in the caller's own Goals (the Goals app's API does
-// the insert). Cadence + start date are inherited from the shared goal.
 async function addToGoals() {
   const p = props.payload
   const res = await fetch('/api/goals', {

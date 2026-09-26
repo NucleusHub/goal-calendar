@@ -7,7 +7,6 @@ import { Icon } from '@core/icons'
 import ArchiveBoxIcon from '@/assets/icons/archive-box.svg?component'
 import PencilSquareIcon from '@/assets/icons/pencil-square.svg?component'
 
-// "Import from Watchlist" only makes sense when the Watchlist app is present.
 const { hasApp } = useRegistry()
 const watchlistInstalled = computed(() => hasApp('watchlist'))
 
@@ -61,7 +60,6 @@ const form = ref(EMPTY())
 
 const showWatchlistPicker = ref(false)
 
-// Which top-level button is active
 const topRepeat = computed(() => DAY_VALUES.includes(form.value.repeat) ? 'day' : form.value.repeat)
 
 function selectTop(val) {
@@ -101,7 +99,6 @@ function handleSubmit() {
             <form @submit.prevent="handleSubmit" class="flex flex-col gap-4">
               <div class="flex flex-col gap-4">
 
-                <!-- Import from Watchlist -->
                 <button
                   v-if="watchlistInstalled"
                   type="button"
@@ -117,7 +114,6 @@ function handleSubmit() {
                   Import from Watchlist
                 </button>
 
-                <!-- Name -->
                 <div class="flex flex-col gap-1.5">
                   <label class="text-sm text-slate-500 dark:text-slate-400">Name</label>
                   <input
@@ -130,7 +126,6 @@ function handleSubmit() {
                   />
                 </div>
 
-                <!-- Description -->
                 <div class="flex flex-col gap-1.5">
                   <label class="text-sm text-slate-500 dark:text-slate-400">Description</label>
                   <textarea
@@ -141,11 +136,9 @@ function handleSubmit() {
                   />
                 </div>
 
-                <!-- Repeat cycle -->
                 <div class="flex flex-col gap-1.5">
                   <label class="text-sm text-slate-500 dark:text-slate-400">Repeat</label>
 
-                  <!-- Top-level: Day / Week / Month / Year / Custom -->
                   <div class="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
                     <button
                       v-for="opt in TOP_OPTIONS"
@@ -163,7 +156,6 @@ function handleSubmit() {
                     </button>
                   </div>
 
-                  <!-- Day sub-options -->
                   <Transition name="expand">
                     <div v-if="topRepeat === 'day'" class="flex gap-1 px-1">
                       <button
@@ -183,7 +175,6 @@ function handleSubmit() {
                     </div>
                   </Transition>
 
-                  <!-- Custom sub-options -->
                   <Transition name="expand">
                     <div v-if="topRepeat === 'custom'" class="flex items-center gap-2 px-1">
                       <span class="text-sm text-slate-500 dark:text-slate-400 shrink-0">Every</span>
@@ -213,7 +204,6 @@ function handleSubmit() {
                   </Transition>
                 </div>
 
-                <!-- Track streak -->
                 <div class="flex items-center justify-between">
                   <span
                     class="text-sm"
@@ -241,7 +231,6 @@ function handleSubmit() {
                   </button>
                 </div>
 
-                <!-- Color -->
                 <div class="flex flex-col gap-1.5">
                   <label class="text-sm text-slate-500 dark:text-slate-400">Color</label>
                   <div class="flex gap-2 flex-wrap items-center">
@@ -272,13 +261,11 @@ function handleSubmit() {
                   </div>
                 </div>
 
-                <!-- Linked watchlist item -->
                 <Transition name="expand">
                   <div
                     v-if="form.watchlistItem"
                     class="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-2 flex items-center gap-2.5 border border-slate-200 dark:border-slate-700"
                   >
-                    <!-- Poster -->
                     <div class="w-10 shrink-0 aspect-[2/3] rounded overflow-hidden bg-slate-200 dark:bg-slate-600">
                       <img
                         v-if="form.watchlistItem.posterUrl"
@@ -288,11 +275,9 @@ function handleSubmit() {
                       />
                       <div v-else class="w-full h-full bg-slate-300 dark:bg-slate-600" />
                     </div>
-                    <!-- Text -->
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ form.watchlistItem.title }}</p>
                     </div>
-                    <!-- Delink -->
                     <button
                       type="button"
                       @click="form.watchlistItem = null"

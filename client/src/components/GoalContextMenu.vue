@@ -9,8 +9,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['edit', 'delete', 'close'])
 
-// Keep the menu on-screen — important on phones where a long-press near an edge
-// would otherwise push it out of view. Sizes are the menu's approx footprint.
 const MENU_W = 160
 const MENU_H = 104
 const pos = computed(() => {
@@ -25,10 +23,7 @@ const pos = computed(() => {
 function onKey(e) { if (e.key === 'Escape') emit('close') }
 function onOutside() { emit('close') }
 
-// Listen on pointerdown (not click): a long-press opens this menu, and the
-// finger-lift then fires a synthetic `click` that would instantly close a
-// click-based listener. pointerdown fires only on a *new* press, so the menu
-// survives the opening gesture and still closes on the next tap anywhere.
+// pointerdown, not click: the long-press finger-lift fires a synthetic click.
 onMounted(() => {
   window.addEventListener('keydown', onKey)
   setTimeout(() => window.addEventListener('pointerdown', onOutside), 0)

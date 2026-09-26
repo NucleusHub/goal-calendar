@@ -85,7 +85,6 @@ function formatRuntime(item) {
     body-class="px-5 pb-5 pt-1"
     @cancel="emit('close')"
   >
-          <!-- Filter tabs -->
           <div class="flex gap-1 pb-3 sticky top-0">
             <button
               v-for="tab in FILTERS"
@@ -103,21 +102,17 @@ function formatRuntime(item) {
             </button>
           </div>
 
-          <!-- Body -->
           <div>
 
-            <!-- Loading -->
             <div v-if="loading" class="flex items-center justify-center py-16">
               <Spinner class="w-8 h-8 text-indigo-500 animate-spin" />
             </div>
 
-            <!-- Empty -->
             <div v-else-if="filtered.length === 0" class="flex flex-col items-center justify-center py-16 gap-2 text-slate-400 dark:text-slate-500">
               <ArchiveBoxIcon class="w-10 h-10" />
               <span class="text-sm">No items found</span>
             </div>
 
-            <!-- Grid -->
             <div v-else class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
               <button
                 v-for="item in filtered"
@@ -128,7 +123,6 @@ function formatRuntime(item) {
                   'cursor-pointer text-left rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700/60 hover:ring-2 hover:ring-indigo-500 transition-all group'
                 ]"
               >
-                <!-- Poster -->
                 <div class="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-700">
                   <img
                     v-if="item.posterUrl || item.poster"
@@ -140,7 +134,6 @@ function formatRuntime(item) {
                     <Icon name="calendar" class="w-8 h-8" :sw="1.5" />
                   </div>
                 </div>
-                <!-- Info -->
                 <div class="p-2 flex flex-col gap-1">
                   <p class="text-xs font-medium text-slate-900 dark:text-white leading-tight line-clamp-2">{{ item.title }}</p>
                   <div class="flex items-center gap-1 flex-wrap">

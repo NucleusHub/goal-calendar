@@ -27,7 +27,6 @@ watch(() => props.show, (val) => {
 <template>
   <TemplateModal :show="show" header title="Delete Goal" size="sm" body-class="px-5 pb-5 pt-2" @cancel="emit('close')">
     <div class="flex flex-col gap-4">
-            <!-- Once: simple confirmation -->
             <template v-if="goal?.repeat === 'none'">
               <p class="text-sm text-slate-500 dark:text-slate-400">
                 Remove <span class="font-medium text-slate-900 dark:text-white">{{ goal?.name }}</span>? This cannot be undone.
@@ -48,13 +47,11 @@ watch(() => props.show, (val) => {
               </div>
             </template>
 
-            <!-- Repeating: full options -->
             <template v-else>
               <p class="text-sm text-slate-500 dark:text-slate-400">
                 How do you want to delete <span class="font-medium text-slate-900 dark:text-white">{{ goal?.name }}</span>?
               </p>
 
-              <!-- Delete from date -->
               <div class="flex flex-col gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700">
                 <p class="text-sm font-medium text-slate-900 dark:text-white">Delete from date</p>
                 <p class="text-xs text-slate-500 dark:text-slate-400">Removes all occurrences from this date onwards.</p>
@@ -71,7 +68,6 @@ watch(() => props.show, (val) => {
                 </button>
               </div>
 
-              <!-- Delete all -->
               <div class="flex flex-col gap-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
                 <p class="text-sm font-medium text-red-700 dark:text-red-400">Delete all occurrences</p>
                 <p class="text-xs text-red-500 dark:text-red-500">Permanently removes this goal and all its history.</p>

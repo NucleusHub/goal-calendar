@@ -25,29 +25,18 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const monthLabel = computed(() =>
   new Date(currentYear.value, currentMonth.value).toLocaleString('default', { month: 'long', year: 'numeric' })
 )
-// Compact label for the phone header, where "September 2025" is too wide.
 const monthLabelShort = computed(() =>
   new Date(currentYear.value, currentMonth.value).toLocaleString('default', { month: 'short', year: 'numeric' })
 )
 
-// Animations controls live in a header popover so they work at every width
-// (the old floating panel sat off-screen on phones and most laptops).
 const animPanelOpen = ref(false)
 
-// ── Month carousel ──────────────────────────────────────────────────────────
-// Three months are always mounted (prev / current / next) in a horizontal
-// track, so the neighbouring months are visible the instant you start dragging
-// instead of a blank gap. Index 1 (current) is centred; drag/commit slides the
-// track by exactly one panel, then we swap the base month and recentre.
 const viewport = ref(null)
-const dragX = ref(0)        // px the track is dragged from its centred position
-const dragging = ref(false) // finger is down → follow 1:1 with no transition
-const instant = ref(false)  // recentre after a commit without animating
+const dragX = ref(0)
+const dragging = ref(false)
+const instant = ref(false)
 const animating = ref(false)
-// For jumps further than one month (e.g. "Today"), the natural neighbour isn't
-// the destination — so we load the target month into the travel-side panel for
-// the duration of the slide, then swap the base month and clear this.
-const jumpOverride = ref(null) // { side: 'prev' | 'next', year, month } | null
+const jumpOverride = ref(null)
 
 function shiftMonth(year, month, delta) {
   const idx = year * 12 + month + delta
@@ -64,8 +53,6 @@ function buildDays(year, month) {
   return days
 }
 
-// [prev, current, next] — index 1 is the centred, visible month. A jumpOverride
-// replaces the travel-side neighbour so a far "Today" jump can slide to it.
 const panels = computed(() => [-1, 0, 1].map(delta => {
   let { year, month } = shiftMonth(currentYear.value, currentMonth.value, delta)
   const ov = jumpOverride.value
@@ -76,11 +63,6 @@ const panels = computed(() => [-1, 0, 1].map(delta => {
   return { key: `${year}-${month}`, year, month, days: buildDays(year, month) }
 }))
 
-// Slide to a month `delta` away, then swap the base month and jump the track
-// back to centre without animation — the revealed panel already shows the
-// destination content, so the recentre is invisible. For |delta| > 1 the
-// destination is loaded into the neighbour first so the slide has something
-// real to move toward (one slide straight to the target, not month-by-month).
 function slideTo(delta) {
   if (animating.value) { dragging.value = false; dragX.value = 0; return }
   const w = viewport.value?.offsetWidth ?? 0
@@ -107,7 +89,6 @@ function slideTo(delta) {
   if (Math.abs(delta) === 1) {
     run()
   } else {
-    // Preload the destination into the travel-side panel, let it paint, then slide.
     jumpOverride.value = { side: delta > 0 ? 'next' : 'prev', year: target.year, month: target.month }
     nextTick(() => requestAnimationFrame(run))
   }
@@ -121,11 +102,10 @@ function goToday() {
   if (delta !== 0) slideTo(delta)
 }
 
-// ── Swipe / drag to change months (phone) ───────────────────────────────────
 let touchStartX = 0
 let touchStartY = 0
-let axisLock = null // 'x' | 'y' — set once the gesture direction is clear
-let didSwipe = false // guards the click that fires after a swipe
+let axisLock = null
+let didSwipe = false
 
 const SWIPE_THRESHOLD = 60
 
@@ -145,7 +125,6 @@ function onGridTouchMove(e) {
   if (!axisLock && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
     axisLock = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
   }
-  // Follow the finger only for horizontal drags; let the page scroll vertically.
   if (axisLock === 'x') dragX.value = dx
 }
 
@@ -156,7 +135,7 @@ function onGridTouchEnd() {
     didSwipe = true
     slideTo(dx < 0 ? 1 : -1)
   } else {
-    dragging.value = false // spring back to centre
+    dragging.value = false
     dragX.value = 0
   }
   axisLock = null
@@ -175,7 +154,6 @@ function isWeekend(date) {
   return d === 0 || d === 6
 }
 
-// ── Goals ──────────────────────────────────────────────────────────────────
 const goals = ref([])
 
 onMounted(async () => {
@@ -267,7 +245,7 @@ function getStreak(goal) {
       if (goal.completedDates?.includes(dateKey(d))) {
         streak++
       } else if (d.getTime() !== todayNorm.getTime()) {
-        break // missed a scheduled day
+        break
       }
     }
     d = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1)
@@ -283,7 +261,6 @@ const streakGoals = computed(() =>
     .sort((a, b) => b.streak - a.streak)
 )
 
-// ── Animation toggles ──────────────────────────────────────────────────────
 const ANIM_KEY = 'nucleus-goals-anim'
 const anim = ref(JSON.parse(localStorage.getItem(ANIM_KEY) ?? 'null') ?? { confetti: true, flames: true, ring: true })
 watch(anim, v => localStorage.setItem(ANIM_KEY, JSON.stringify(v)), { deep: true })
@@ -293,7 +270,6 @@ function toggleAll() {
   anim.value = { confetti: next, flames: next, ring: next }
 }
 
-// ── Fire border (streak milestones) ────────────────────────────────────────
 const fieryGoalIds = ref([])
 
 async function activateFireBorder(goalId) {
@@ -329,7 +305,6 @@ async function activateFireBorder(goalId) {
   })
 }
 
-// ── Fire particle animation ─────────────────────────────────────────────────
 const fires = ref([])
 let fireId = 0
 
@@ -388,7 +363,6 @@ function fireConfetti(e) {
   }, 130)
 }
 
-// ── Context menu ───────────────────────────────────────────────────────────
 const ctxMenu = ref({ visible: false, x: 0, y: 0, goal: null, date: null })
 
 function onChipRightClick(e, goal, date) {
@@ -397,7 +371,6 @@ function onChipRightClick(e, goal, date) {
   ctxMenu.value = { visible: true, x: e.clientX, y: e.clientY, goal, date }
 }
 
-// Touch has no right-click, so a long-press opens the same edit/delete menu.
 let pressTimer = null
 let longPressed = false
 
@@ -408,7 +381,7 @@ function onChipTouchStart(e, goal, date) {
   const x = t.clientX, y = t.clientY
   pressTimer = setTimeout(() => {
     longPressed = true
-    try { navigator.vibrate?.(15) } catch { /* not supported */ }
+    try { navigator.vibrate?.(15) } catch {}
     ctxMenu.value = { visible: true, x, y, goal, date }
   }, 420)
 }
@@ -417,14 +390,12 @@ function cancelPress() {
   clearTimeout(pressTimer)
 }
 
-// A completed long-press must not also toggle completion on finger-lift.
 function onChipClick(goal, date, e) {
   if (didSwipe) return
   if (longPressed) { longPressed = false; return }
   toggleCompletion(goal, date, e)
 }
 
-// ── Edit ───────────────────────────────────────────────────────────────────
 const editModal = ref({ visible: false, goal: null })
 
 async function submitEdit(fields) {
@@ -433,7 +404,6 @@ async function submitEdit(fields) {
   if (idx !== -1) goals.value.splice(idx, 1, updated)
 }
 
-// ── Delete ─────────────────────────────────────────────────────────────────
 const deleteModal = ref({ visible: false, goal: null, date: null })
 
 async function handleDeleteAll() {
@@ -447,7 +417,6 @@ async function handleDeleteFrom(fromDate) {
   if (idx !== -1) goals.value[idx] = updated
 }
 
-// ── New goal modal ─────────────────────────────────────────────────────────
 const modalOpen = ref(false)
 const selectedDay = ref(null)
 
@@ -464,7 +433,6 @@ function openModal(day) {
 
     <AppSidebar :open="sidebarOpen" @close="sidebarOpen = false" />
 
-    <!-- Header: hamburger pinned left, nav controls centered -->
     <AppHeader>
       <template #left>
         <button
@@ -475,7 +443,6 @@ function openModal(day) {
         </button>
       </template>
 
-      <!-- Month navigation — arrows flank the label, all centered by the grid -->
       <button @click="prevMonth" aria-label="Previous month" class="nuc-press nav-arrow">
         <ChevronLeftIcon class="w-4 h-4" />
       </button>
@@ -492,7 +459,6 @@ function openModal(day) {
       </button>
 
       <template #right>
-        <!-- Animations popover — reachable at any width -->
         <div class="relative">
           <button
             @click="animPanelOpen = !animPanelOpen"
@@ -514,7 +480,6 @@ function openModal(day) {
           >
             <p class="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide">Animations</p>
             <div class="flex flex-col gap-2">
-              <!-- All -->
               <div class="flex items-center gap-2">
                 <span class="flex-1 text-xs font-semibold text-slate-700 dark:text-slate-200">✨ All</span>
                 <button type="button" @click="toggleAll"
@@ -523,7 +488,6 @@ function openModal(day) {
                 </button>
               </div>
               <div class="border-t border-black/8 dark:border-white/8" />
-              <!-- Individual -->
               <div v-for="item in [
                 { key: 'confetti', label: 'Confetti', emoji: '🎊' },
                 { key: 'flames',   label: 'Flames',   emoji: '🔥' },
@@ -541,11 +505,9 @@ function openModal(day) {
       </template>
     </AppHeader>
 
-    <!-- Calendar -->
     <main class="relative z-10 flex-1 px-3 sm:px-6 pt-2 sm:pt-4 pb-8 w-full">
       <div class="relative max-w-3xl mx-auto">
       <div class="cal-card nuc-in">
-        <!-- Weekday labels -->
         <div class="grid grid-cols-7 px-1 mb-1.5 sm:mb-2">
           <div
             v-for="(day, di) in DAYS"
@@ -558,8 +520,6 @@ function openModal(day) {
           </div>
         </div>
 
-        <!-- Swipeable month carousel: prev / current / next always mounted so
-             the neighbouring months are visible the moment a drag begins. -->
         <div
           ref="viewport"
           class="overflow-hidden relative"
@@ -593,13 +553,11 @@ function openModal(day) {
                     >
                       {{ day.date.getDate() }}
                     </span>
-                    <!-- Desktop hover hint; on touch the whole cell taps to add. -->
                     <span class="add-hint opacity-0 sm:group-hover/day:opacity-100">
                       <Icon name="plus" class="w-3 h-3" :sw="2.5" />
                     </span>
                   </div>
 
-                  <!-- Goal chips: outlined when pending, solid + glow when done -->
                   <div class="flex flex-wrap gap-1 sm:gap-1.5 mt-0.5">
                     <button
                       v-for="goal in goalsPerDay.get(dateKey(day.date)) ?? []"
@@ -618,7 +576,6 @@ function openModal(day) {
                       :style="{ '--c': goal.color }"
                       :title="goal.name"
                     >
-                      <!-- Compact dots on phone; lettered chips with a check on ≥sm -->
                       <Icon name="checkBold" v-if="isCompletedOnDay(goal, day.date)" class="hidden sm:block w-3 h-3" :sw="3.25" />
                       <span v-else class="hidden sm:block select-none">{{ goal.name[0].toUpperCase() }}</span>
                     </button>
@@ -628,9 +585,8 @@ function openModal(day) {
             </div>
           </div>
         </div>
-      </div><!-- end cal-card -->
+      </div>
 
-      <!-- Streaks -->
       <Transition name="fade-up">
         <div v-if="streakGoals.length" class="mt-6 flex flex-col gap-3 px-1">
           <p class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-[0.14em]">Active streaks</p>
@@ -664,10 +620,9 @@ function openModal(day) {
           </div>
         </div>
       </Transition>
-      </div><!-- end mx-auto wrapper -->
+      </div>
     </main>
 
-    <!-- Fire particles -->
     <span
       v-for="f in fires"
       :key="f.id"
@@ -710,7 +665,6 @@ function openModal(day) {
 </template>
 
 <style scoped>
-/* ── Header nav ──────────────────────────────────────────────────────────── */
 .nav-arrow {
   display: flex;
   padding: 7px;
@@ -759,7 +713,6 @@ function openModal(day) {
   box-shadow: 0 0 6px rgba(99, 102, 241, 0.7);
 }
 
-/* ── Calendar card: the elevated glass surface the month floats in ───────── */
 .cal-card {
   padding: 12px;
   border-radius: 26px;
@@ -781,7 +734,6 @@ function openModal(day) {
     inset 0 1px 0 rgba(180, 150, 255, 0.09);
 }
 
-/* ── Day cells: borderless, airy, highlight on hover ─────────────────────── */
 .day-cell {
   border-radius: 14px;
   transition: background-color 0.15s ease;
@@ -796,14 +748,12 @@ function openModal(day) {
   .dark .day-cell.is-today:hover { background: rgba(129, 140, 248, 0.15); }
 }
 
-/* Today's date marker */
 .today-num {
   color: #fff;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   box-shadow: 0 3px 10px -2px rgba(99, 102, 241, 0.6);
 }
 
-/* Desktop "add goal" affordance */
 .add-hint {
   display: flex;
   align-items: center;
@@ -818,7 +768,6 @@ function openModal(day) {
 }
 .group\/day:hover .add-hint { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
 
-/* ── Goal chips: outlined = pending, solid + glow = done ─────────────────── */
 .chip {
   --c: #6366f1;
   position: relative;
@@ -850,7 +799,6 @@ function openModal(day) {
 .chip.is-actionable:active { transform: scale(0.92); }
 .chip.is-future { opacity: 0.4; cursor: default; }
 
-/* ── Streak pills ────────────────────────────────────────────────────────── */
 .streak-pill {
   backdrop-filter: blur(12px);
   background: rgba(255, 255, 255, 0.75);
@@ -862,9 +810,6 @@ function openModal(day) {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* ── Month carousel: a 300%-wide track of three equal panels. Centred on the
-   middle panel via translateX(-33.3333%); the finger/commit adds a px offset.
-   Transition off while dragging (follow 1:1) or recentring (invisible jump). */
 .month-track {
   display: flex;
   width: 300%;

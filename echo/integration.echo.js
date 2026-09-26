@@ -1,12 +1,7 @@
 import GoalUpdateCard from './GoalUpdateCard.vue'
 
-// Goals' Echo client integration — the single file Echo auto-discovers for this
-// app. Owns the renderer for its message type plus the "share a goal" composer
-// action. The matching server-side declaration is manifest.echo.json alongside.
-
 const todayIso = () => new Date().toISOString().slice(0, 10)
 
-// Consecutive-day streak ending today (or yesterday if today isn't done yet).
 function goalStreak(dates) {
   if (!dates?.length) return 0
   const set = new Set(dates)
@@ -25,8 +20,6 @@ export default {
     'goal.update': GoalUpdateCard,
   },
 
-  // `source` drives Echo's generic share picker: load the user's items, then map
-  // each to a picker row carrying the goal.update message to send when picked.
   composerActions: {
     share_goal: {
       source: {
